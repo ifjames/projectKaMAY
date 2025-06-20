@@ -4,26 +4,18 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import Landing from "@/pages/landing";
+import Auth from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
 import Lessons from "@/pages/lessons";
 import Profile from "@/pages/profile";
 import Settings from "@/pages/settings";
 import GlassNavbar from "@/components/glass-navbar";
-import { useState, useEffect } from "react";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 function Router() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const { currentUser, loading } = useAuth();
 
-  useEffect(() => {
-    // Simple auth check - in real app this would validate session/token
-    const authStatus = localStorage.getItem('kamay_auth') === 'true';
-    setIsAuthenticated(authStatus);
-    setIsLoading(false);
-  }, []);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 cultural-pattern flex items-center justify-center">
         <div className="glass-effect rounded-3xl p-8">
@@ -34,24 +26,29 @@ function Router() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!currentUser) {
     return (
       <Switch>
-        <Route path="/" component={Landing} />
-        <Route component={Landing} />
+        <Route path="/" component={Auth} />
+        <Route component={Auth} />
       </Switch>
     );
   }
 
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/lessons" component={Lessons} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/settings" component={Settings} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen bg-gray-50 cultural-pattern">
+      <GlassNavbar />
+      <main className="pt-20 pb-8">
+        <Switch>
+          <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route path="/lessons" component={Lessons} />
+          <Route path="/profile" component={Profile} />
+          <Route path="/settings" component={Settings} />
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+    </div>
   );
 }
 
@@ -59,13 +56,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="bg-gray-50 text-gray-900 min-h-screen cultural-pattern">
-          <GlassNavbar />
-          <main className="pt-20 pb-8">
-            <Router />
-          </main>
+        <AuthProvider>
+          <Router />
           <Toaster />
-        </div>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

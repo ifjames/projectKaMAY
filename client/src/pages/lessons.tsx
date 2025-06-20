@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -54,13 +54,17 @@ export default function Lessons() {
     },
   });
 
-  // Get all lessons for all dialects
-  const lessonQueries = dialects?.map(dialect => 
-    useQuery<Lesson[]>({
-      queryKey: [`/api/dialects/${dialect.id}/lessons`],
-      enabled: !!dialect,
-    })
-  );
+  // Get all lessons for all dialects - moved outside conditional rendering
+  const lessonQueries = useMemo(() => {
+    if (!dialects) return [];
+    return dialects.map(dialect => ({
+      dialectId: dialect.id,
+      query: useQuery<Lesson[]>({
+        queryKey: [`/api/dialects/${dialect.id}/lessons`],
+        enabled: !!dialect,
+      })
+    }));
+  }, [dialects]);
 
   if (dialectsLoading || progressLoading) {
     return (
@@ -290,7 +294,7 @@ export default function Lessons() {
       {/* Lessons by Dialect */}
       <div className="space-y-8">
         {dialects?.map((dialect, dialectIndex) => {
-          const dialectLessons = lessonQueries?.[dialectIndex]?.data || [];
+          const dialectLessons = lessonQueries?.[dialectIndex]?.query?.data || [];
           const progress = getProgressForDialect(dialect.id);
           
           return (
