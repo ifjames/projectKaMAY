@@ -50,7 +50,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [demoMode, setDemoMode] = useState(false);
 
   async function signup(email: string, password: string, displayName: string) {
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
@@ -122,60 +121,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Check if Firebase config is available
-    const hasFirebaseConfig = import.meta.env.VITE_FIREBASE_API_KEY && 
-                              import.meta.env.VITE_FIREBASE_API_KEY !== "demo-api-key";
-    
-    if (!hasFirebaseConfig) {
-      // Demo mode - simulate authentication for development
-      setDemoMode(true);
-      const demoUser = {
-        uid: 'demo-user',
-        email: 'demo@kamay.app',
-        displayName: 'Demo User',
-        photoURL: null,
-      } as User;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setCurrentUser(user);
       
-      const demoUserData: UserData = {
-        uid: 'demo-user',
-        email: 'demo@kamay.app',
-        displayName: 'Demo User',
-        createdAt: new Date(),
-        lastLoginAt: new Date(),
-        learningProgress: {},
-      };
-      
-      setCurrentUser(demoUser);
-      setUserData(demoUserData);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        setCurrentUser(user);
+      if (user) {
+        // Fetch user data from Firestore
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDocSnap = await getDoc(userDocRef);
         
-        if (user) {
-          // Fetch user data from Firestore
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          
-          if (userDocSnap.exists()) {
-            setUserData(userDocSnap.data() as UserData);
-          }
-        } else {
-          setUserData(null);
+        if (userDocSnap.exists()) {
+          setUserData(userDocSnap.data() as UserData);
         }
-        
-        setLoading(false);
-      });
-
-      return unsubscribe;
-    } catch (error) {
-      console.warn('Firebase Auth initialization failed, using demo mode:', error);
-      setDemoMode(true);
+      } else {
+        setUserData(null);
+      }
+      
       setLoading(false);
-    }
+    });
+
+    return unsubscribe;
   }, []);
 
   const value = {

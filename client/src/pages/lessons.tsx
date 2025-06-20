@@ -54,17 +54,36 @@ export default function Lessons() {
     },
   });
 
-  // Get all lessons for all dialects - moved outside conditional rendering
-  const lessonQueries = useMemo(() => {
-    if (!dialects) return [];
-    return dialects.map(dialect => ({
-      dialectId: dialect.id,
-      query: useQuery<Lesson[]>({
-        queryKey: [`/api/dialects/${dialect.id}/lessons`],
-        enabled: !!dialect,
-      })
-    }));
-  }, [dialects]);
+  // Get lessons for each dialect - ensure hooks are called at top level
+  const dialect1Lessons = useQuery<Lesson[]>({
+    queryKey: ['/api/dialects/1/lessons'],
+    enabled: !!dialects?.find(d => d.id === 1),
+  });
+  
+  const dialect2Lessons = useQuery<Lesson[]>({
+    queryKey: ['/api/dialects/2/lessons'],
+    enabled: !!dialects?.find(d => d.id === 2),
+  });
+  
+  const dialect3Lessons = useQuery<Lesson[]>({
+    queryKey: ['/api/dialects/3/lessons'],
+    enabled: !!dialects?.find(d => d.id === 3),
+  });
+  
+  const dialect4Lessons = useQuery<Lesson[]>({
+    queryKey: ['/api/dialects/4/lessons'],
+    enabled: !!dialects?.find(d => d.id === 4),
+  });
+
+  const getLessonsForDialect = (dialectId: number) => {
+    switch (dialectId) {
+      case 1: return dialect1Lessons.data || [];
+      case 2: return dialect2Lessons.data || [];
+      case 3: return dialect3Lessons.data || [];
+      case 4: return dialect4Lessons.data || [];
+      default: return [];
+    }
+  };
 
   if (dialectsLoading || progressLoading) {
     return (
@@ -294,7 +313,7 @@ export default function Lessons() {
       {/* Lessons by Dialect */}
       <div className="space-y-8">
         {dialects?.map((dialect, dialectIndex) => {
-          const dialectLessons = lessonQueries?.[dialectIndex]?.query?.data || [];
+          const dialectLessons = getLessonsForDialect(dialect.id);
           const progress = getProgressForDialect(dialect.id);
           
           return (
