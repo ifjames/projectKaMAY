@@ -34,11 +34,11 @@ export default function GlassNavbar() {
           <div className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
-                <a className={`text-gray-700 hover:text-filipino-blue transition-colors font-medium ${
+                <span className={`text-gray-700 hover:text-filipino-blue transition-colors font-medium cursor-pointer ${
                   isActive(item.href) ? 'text-filipino-blue' : ''
                 }`}>
                   {item.label}
-                </a>
+                </span>
               </Link>
             ))}
           </div>
@@ -70,14 +70,14 @@ export default function GlassNavbar() {
               <div className="flex flex-col space-y-3">
                 {navItems.map((item) => (
                   <Link key={item.href} href={item.href}>
-                    <a 
-                      className={`text-gray-700 hover:text-filipino-blue transition-colors font-medium py-2 block ${
+                    <span 
+                      className={`text-gray-700 hover:text-filipino-blue transition-colors font-medium py-2 block cursor-pointer ${
                         isActive(item.href) ? 'text-filipino-blue' : ''
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       {item.label}
-                    </a>
+                    </span>
                   </Link>
                 ))}
               </div>

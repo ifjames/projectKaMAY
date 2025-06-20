@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { User, Download, Trash2, LogOut } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { User, Download, Trash2, LogOut, Settings, Bell, Volume2, Clock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -62,14 +62,53 @@ export default function Profile() {
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4">
-        <div className="grid md:grid-cols-3 gap-8">
-          <div className="animate-pulse">
-            <div className="glass-effect rounded-2xl p-6 h-64"></div>
-          </div>
-          <div className="md:col-span-2 animate-pulse">
-            <div className="glass-effect rounded-2xl p-8 h-96"></div>
-          </div>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="grid md:grid-cols-3 gap-8"
+        >
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="glass-effect rounded-2xl p-6"
+          >
+            <div className="animate-pulse space-y-4">
+              <motion.div 
+                className="w-24 h-24 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full mx-auto"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              />
+              <motion.div 
+                className="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4 mx-auto"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+              />
+              <motion.div 
+                className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-1/2 mx-auto"
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+              />
+            </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="md:col-span-2 glass-effect rounded-2xl p-8"
+          >
+            <div className="animate-pulse space-y-6">
+              {[1, 2, 3].map((i) => (
+                <motion.div 
+                  key={i}
+                  className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
+                />
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
     );
   }
@@ -117,10 +156,26 @@ export default function Profile() {
               
               <div className="space-y-6">
                 {/* Audio Settings */}
-                <div className="bg-white bg-opacity-50 rounded-xl p-6">
-                  <h4 className="font-semibold text-gray-800 mb-4">Audio Settings</h4>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.1 }}
+                  className="bg-white bg-opacity-50 rounded-xl p-6"
+                >
+                  <div className="flex items-center space-x-3 mb-4">
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      className="w-8 h-8 bg-filipino-blue rounded-lg flex items-center justify-center"
+                    >
+                      <Volume2 className="text-white text-sm" />
+                    </motion.div>
+                    <h4 className="font-semibold text-gray-800">Audio Settings</h4>
+                  </div>
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <motion.div 
+                      whileHover={{ x: 4 }}
+                      className="flex items-center justify-between"
+                    >
                       <Label htmlFor="audio-speed" className="text-gray-700">
                         Audio Playback Speed
                       </Label>
@@ -134,8 +189,11 @@ export default function Profile() {
                           <SelectItem value="fast">Fast</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                    <div className="flex items-center justify-between">
+                    </motion.div>
+                    <motion.div 
+                      whileHover={{ x: 4 }}
+                      className="flex items-center justify-between"
+                    >
                       <Label htmlFor="auto-play" className="text-gray-700">
                         Auto-play Audio
                       </Label>
@@ -144,9 +202,9 @@ export default function Profile() {
                         checked={autoPlayAudio}
                         onCheckedChange={setAutoPlayAudio}
                       />
-                    </div>
+                    </motion.div>
                   </div>
-                </div>
+                </motion.div>
                 
                 {/* Learning Preferences */}
                 <div className="bg-white bg-opacity-50 rounded-xl p-6">

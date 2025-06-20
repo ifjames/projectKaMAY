@@ -110,27 +110,75 @@ export class MemStorage implements IStorage {
     this.currentDialectId = 5;
 
     // Create sample lessons for each dialect
-    dialectsData.forEach(dialect => {
-      const lesson: Lesson = {
-        id: this.currentLessonId++,
-        dialectId: dialect.id,
-        title: "Basic Greetings",
-        content: "Learn essential greetings in " + dialect.name,
-        audioUrl: `/api/audio/${dialect.name.toLowerCase()}/kumusta.mp3`,
-        lessonNumber: 1,
-        vocabulary: [
-          { word: "Kumusta", translation: "Hello/How are you?", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/kumusta.mp3` },
-          { word: "Maayong adlaw", translation: "Good day", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/maayong-adlaw.mp3` },
-        ],
-        quiz: [
-          {
+    dialectsData.forEach((dialect, dialectIndex) => {
+      const lessonsData = [
+        {
+          title: "Basic Greetings",
+          content: "Learn essential greetings and polite expressions",
+          vocabulary: [
+            { word: "Kumusta", translation: "Hello/How are you?", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/kumusta.mp3` },
+            { word: "Maayong adlaw", translation: "Good day", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/maayong-adlaw.mp3` },
+          ],
+          quiz: {
             question: "What does 'Kumusta' mean?",
             options: ["How are you?", "What's your name?", "Where are you going?", "Good morning"],
             correctAnswer: 0,
-          },
-        ],
-      };
-      this.lessons.set(lesson.id, lesson);
+          }
+        },
+        {
+          title: "Family Terms",
+          content: "Learn how to address family members",
+          vocabulary: [
+            { word: "Tatay", translation: "Father", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/tatay.mp3` },
+            { word: "Nanay", translation: "Mother", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/nanay.mp3` },
+          ],
+          quiz: {
+            question: "What does 'Nanay' mean?",
+            options: ["Sister", "Mother", "Grandmother", "Aunt"],
+            correctAnswer: 1,
+          }
+        },
+        {
+          title: "Numbers 1-10",
+          content: "Count from one to ten in " + dialect.name,
+          vocabulary: [
+            { word: "Isa", translation: "One", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/isa.mp3` },
+            { word: "Duha", translation: "Two", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/duha.mp3` },
+          ],
+          quiz: {
+            question: "What number is 'Duha'?",
+            options: ["One", "Two", "Three", "Four"],
+            correctAnswer: 1,
+          }
+        },
+        {
+          title: "Common Phrases",
+          content: "Essential phrases for daily conversation",
+          vocabulary: [
+            { word: "Salamat", translation: "Thank you", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/salamat.mp3` },
+            { word: "Oo", translation: "Yes", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/oo.mp3` },
+          ],
+          quiz: {
+            question: "How do you say 'Thank you'?",
+            options: ["Salamat", "Kumusta", "Oo", "Hindi"],
+            correctAnswer: 0,
+          }
+        }
+      ];
+
+      lessonsData.forEach((lessonData, index) => {
+        const lesson: Lesson = {
+          id: this.currentLessonId++,
+          dialectId: dialect.id,
+          title: lessonData.title,
+          content: lessonData.content,
+          audioUrl: `/api/audio/${dialect.name.toLowerCase()}/lesson${index + 1}.mp3`,
+          lessonNumber: index + 1,
+          vocabulary: lessonData.vocabulary as any,
+          quiz: [lessonData.quiz] as any,
+        };
+        this.lessons.set(lesson.id, lesson);
+      });
     });
 
     // Create user progress
@@ -191,8 +239,15 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const user: User = {
-      ...insertUser,
       id: this.currentUserId++,
+      name: insertUser.name,
+      email: insertUser.email,
+      overallProgress: insertUser.overallProgress ?? 0,
+      streak: insertUser.streak ?? 0,
+      weeklyGoalMinutes: insertUser.weeklyGoalMinutes ?? 15,
+      audioSpeed: insertUser.audioSpeed ?? "normal",
+      autoPlayAudio: insertUser.autoPlayAudio ?? true,
+      pushNotifications: insertUser.pushNotifications ?? true,
       lastActiveDate: new Date(),
     };
     this.users.set(user.id, user);
@@ -219,8 +274,12 @@ export class MemStorage implements IStorage {
 
   async createDialect(insertDialect: InsertDialect): Promise<Dialect> {
     const dialect: Dialect = {
-      ...insertDialect,
       id: this.currentDialectId++,
+      name: insertDialect.name,
+      description: insertDialect.description,
+      region: insertDialect.region,
+      color: insertDialect.color,
+      totalLessons: insertDialect.totalLessons || 16,
     };
     this.dialects.set(dialect.id, dialect);
     return dialect;
@@ -237,8 +296,14 @@ export class MemStorage implements IStorage {
 
   async createLesson(insertLesson: InsertLesson): Promise<Lesson> {
     const lesson: Lesson = {
-      ...insertLesson,
       id: this.currentLessonId++,
+      dialectId: insertLesson.dialectId,
+      title: insertLesson.title,
+      content: insertLesson.content,
+      audioUrl: insertLesson.audioUrl || null,
+      lessonNumber: insertLesson.lessonNumber,
+      vocabulary: insertLesson.vocabulary || null,
+      quiz: insertLesson.quiz || null,
     };
     this.lessons.set(lesson.id, lesson);
     return lesson;

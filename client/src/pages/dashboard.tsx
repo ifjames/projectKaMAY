@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
-import { motion } from 'framer-motion';
-import { Flame, Target, Medal, Star, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Flame, Target, Medal, Star, Plus, BookOpen, Trophy, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import DialectCard from '@/components/dialect-card';
@@ -42,15 +42,58 @@ export default function Dashboard() {
   if (userLoading || dialectsLoading || progressLoading || achievementsLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid lg:grid-cols-3 gap-8">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="grid lg:grid-cols-3 gap-8"
+        >
           <div className="lg:col-span-2 space-y-8">
-            <div className="glass-effect rounded-3xl p-8 animate-pulse">
-              <div className="h-8 bg-gray-200 rounded mb-4 w-1/3"></div>
-              <div className="h-4 bg-gray-200 rounded mb-6 w-1/2"></div>
-              <div className="h-24 bg-gray-200 rounded"></div>
-            </div>
+            {[1, 2, 3].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                className="glass-effect rounded-3xl p-8"
+              >
+                <div className="animate-pulse">
+                  <motion.div 
+                    className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded mb-4 w-1/3"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                  <motion.div 
+                    className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded mb-6 w-1/2"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
+                  />
+                  <motion.div 
+                    className="h-24 bg-gradient-to-r from-gray-200 to-gray-300 rounded"
+                    animate={{ opacity: [0.5, 1, 0.5] }}
+                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
+                  />
+                </div>
+              </motion.div>
+            ))}
           </div>
-        </div>
+          <div className="space-y-6">
+            {[1, 2, 3].map((i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: i * 0.15 }}
+                className="glass-effect rounded-2xl p-6 animate-pulse"
+              >
+                <motion.div 
+                  className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -204,7 +247,7 @@ export default function Dashboard() {
                       <div>
                         <p className="font-medium text-gray-800">{achievement.title}</p>
                         <p className="text-xs text-gray-500">
-                          {new Date(achievement.earnedAt).toLocaleDateString()}
+                          {achievement.earnedAt ? new Date(achievement.earnedAt).toLocaleDateString() : 'Recent'}
                         </p>
                       </div>
                     </div>
