@@ -20,13 +20,4 @@ export const auth = getAuth(app);
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
 
-// Connect to emulators in development
-if (import.meta.env.DEV && !auth.emulatorConfig) {
-  try {
-    connectAuthEmulator(auth, 'http://localhost:9099');
-    connectFirestoreEmulator(db, 'localhost', 8080);
-  } catch (error) {
-    // Emulators already connected or not available
-    console.log('Firebase emulators not connected:', error);
-  }
-}
+// Use production Firebase services - no emulators

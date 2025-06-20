@@ -52,21 +52,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   async function signup(email: string, password: string, displayName: string) {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(user, { displayName });
-    
-    // Create user document in Firestore
-    const userDoc: UserData = {
-      uid: user.uid,
-      email: user.email!,
-      displayName,
-      photoURL: user.photoURL || undefined,
-      createdAt: new Date(),
-      lastLoginAt: new Date(),
-      learningProgress: {},
-    };
-    
-    await setDoc(doc(db, 'users', user.uid), userDoc);
+    try {
+      console.log('Starting Firebase signup process...');
+      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('User created successfully:', user.uid);
+      
+      await updateProfile(user, { displayName });
+      console.log('Profile updated successfully');
+      
+      // Create user document in Firestore
+      const userDoc: UserData = {
+        uid: user.uid,
+        email: user.email!,
+        displayName,
+        photoURL: user.photoURL || undefined,
+        createdAt: new Date(),
+        lastLoginAt: new Date(),
+        learningProgress: {},
+      };
+      
+      await setDoc(doc(db, 'users', user.uid), userDoc);
+      console.log('User document created in Firestore');
+    } catch (error: any) {
+      console.error('Firebase signup error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      throw error;
+    }
   }
 
   async function login(email: string, password: string) {
