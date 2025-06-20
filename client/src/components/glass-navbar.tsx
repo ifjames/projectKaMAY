@@ -12,6 +12,7 @@ export default function GlassNavbar() {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/lessons', label: 'Lessons' },
     { href: '/profile', label: 'Profile' },
+    { href: '/settings', label: 'Settings' },
   ];
 
   const isActive = (href: string) => {

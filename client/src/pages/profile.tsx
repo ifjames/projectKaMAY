@@ -1,281 +1,273 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
-import { User, Download, Trash2, LogOut, Settings, Bell, Volume2, Clock } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import { User, Trophy, Medal, Star, Calendar, Award, Settings as SettingsIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { showConfirmAlert, showInfoAlert } from '@/lib/sweetalert';
-import type { User as UserType } from '@shared/schema';
+import { Badge } from '@/components/ui/badge';
+import { useLocation } from 'wouter';
+import type { User as UserType, Achievement } from '@shared/schema';
 
 export default function Profile() {
-  const [audioSpeed, setAudioSpeed] = useState('normal');
-  const [autoPlayAudio, setAutoPlayAudio] = useState(true);
-  const [pushNotifications, setPushNotifications] = useState(true);
-  const [weeklyGoalMinutes, setWeeklyGoalMinutes] = useState(30);
+  const [, setLocation] = useLocation();
 
   const { data: user, isLoading } = useQuery<UserType>({
     queryKey: ['/api/user'],
   });
 
-  const updateUserMutation = useMutation({
-    mutationFn: (updates: Partial<UserType>) => 
-      apiRequest('PATCH', '/api/user', updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
-    },
+  const { data: achievements, isLoading: achievementsLoading } = useQuery<Achievement[]>({
+    queryKey: ['/api/user/achievements'],
   });
 
-  const handleResetProgress = async () => {
-    const result = await showConfirmAlert(
-      'Reset Progress?',
-      'This will delete all your learning progress. This action cannot be undone.',
-      'Yes, reset it!'
-    );
-    
-    if (result.isConfirmed) {
-      // In a real app, this would call an API to reset progress
-      showInfoAlert('Progress Reset', 'Your learning progress has been reset.');
-    }
-  };
+  const totalPoints = achievements?.length ? achievements.length * 100 : 0;
+  const completedLessons = 25; // This would come from progress data
+  const currentLevel = Math.floor(totalPoints / 300) + 1;
 
-  const handleExportData = () => {
-    showInfoAlert('Exporting Data', 'Your learning data is being prepared for download...');
-  };
-
-  const handleSignOut = async () => {
-    const result = await showConfirmAlert(
-      'Sign Out?',
-      'Are you sure you want to sign out?',
-      'Yes, sign out'
-    );
-    
-    if (result.isConfirmed) {
-      // In a real app, this would handle sign out
-      showInfoAlert('Signed Out', 'You have been signed out successfully.');
-    }
-  };
-
-  if (isLoading) {
+  if (isLoading || achievementsLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-4">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid md:grid-cols-3 gap-8"
+          className="space-y-8"
         >
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="glass-effect rounded-2xl p-6"
-          >
-            <div className="animate-pulse space-y-4">
-              <motion.div 
-                className="w-24 h-24 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full mx-auto"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              />
-              <motion.div 
-                className="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4 mx-auto"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-              />
-              <motion.div 
-                className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-1/2 mx-auto"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
-              />
-            </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="md:col-span-2 glass-effect rounded-2xl p-8"
-          >
-            <div className="animate-pulse space-y-6">
-              {[1, 2, 3].map((i) => (
+          {[1, 2, 3].map((i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="glass-effect rounded-2xl p-8"
+            >
+              <div className="animate-pulse space-y-4">
                 <motion.div 
-                  key={i}
-                  className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded"
+                  className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-1/4"
                   animate={{ opacity: [0.5, 1, 0.5] }}
                   transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
                 />
-              ))}
-            </div>
-          </motion.div>
+                <motion.div 
+                  className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: (i * 0.1) + 0.2 }}
+                />
+              </div>
+            </motion.div>
+          ))}
         </motion.div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 mb-12">
-      <div className="grid md:grid-cols-3 gap-8">
-        {/* Profile Card */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="glass-effect text-center">
-            <CardContent className="p-6">
-              <div className="w-24 h-24 bg-gradient-to-r from-filipino-blue to-filipino-red rounded-full mx-auto mb-4 flex items-center justify-center">
-                <User className="text-white text-3xl" />
+    <div className="max-w-6xl mx-auto px-4 mb-12">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="mb-8"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              className="w-20 h-20 bg-gradient-to-br from-filipino-blue via-filipino-red to-filipino-yellow rounded-full flex items-center justify-center relative overflow-hidden"
+            >
+              <User className="text-white text-2xl" />
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute inset-0 bg-white bg-opacity-20 rounded-full"
+              />
+            </motion.div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">{user?.name || 'Maria Santos'}</h1>
+              <p className="text-gray-600">@{user?.name?.toLowerCase().replace(' ', '_') || 'maria_santos'}</p>
+              <div className="flex items-center space-x-4 mt-2">
+                <Badge variant="secondary" className="glass-effect">
+                  Level {currentLevel}
+                </Badge>
+                <Badge variant="secondary" className="glass-effect">
+                  {totalPoints} Points
+                </Badge>
               </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-2">
-                {user?.name || 'User'}
-              </h3>
-              <p className="text-gray-600 mb-4">
-                {user?.email || 'user@example.com'}
-              </p>
-              <Button
-                variant="ghost"
-                className="glass-effect hover:bg-white hover:bg-opacity-20 w-full"
-              >
-                Edit Profile
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-        
-        {/* Settings */}
-        <motion.div
-          className="md:col-span-2"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="glass-effect">
-            <CardContent className="p-8">
-              <h3 className="text-2xl font-bold text-gray-800 mb-6">Settings</h3>
-              
-              <div className="space-y-6">
-                {/* Audio Settings */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.1 }}
-                  className="bg-white bg-opacity-50 rounded-xl p-6"
-                >
-                  <div className="flex items-center space-x-3 mb-4">
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            className="glass-effect hover:bg-white hover:bg-opacity-20"
+            onClick={() => setLocation('/settings')}
+          >
+            <SettingsIcon className="mr-2 w-4 h-4" />
+            Settings
+          </Button>
+        </div>
+      </motion.div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Stats Cards */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Learning Stats */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <Card className="glass-effect">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    className="w-10 h-10 bg-filipino-blue rounded-lg flex items-center justify-center"
+                  >
+                    <Trophy className="text-white text-lg" />
+                  </motion.div>
+                  <h3 className="text-lg font-bold text-gray-800">Learning Stats</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Lessons Completed</span>
+                    <span className="font-bold text-filipino-blue">{completedLessons}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Current Streak</span>
+                    <span className="font-bold text-filipino-red">{user?.streak || 0} days</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Total Points</span>
+                    <span className="font-bold text-filipino-yellow">{totalPoints}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Level</span>
+                    <span className="font-bold text-gray-800">Level {currentLevel}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Recent Activity */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Card className="glass-effect">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    className="w-10 h-10 bg-filipino-yellow rounded-lg flex items-center justify-center"
+                  >
+                    <Calendar className="text-white text-lg" />
+                  </motion.div>
+                  <h3 className="text-lg font-bold text-gray-800">Recent Activity</h3>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-gray-600">Completed Hiligaynon Lesson 3</span>
+                    <span className="text-gray-400">2h ago</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="w-2 h-2 bg-filipino-blue rounded-full"></div>
+                    <span className="text-gray-600">Earned "Quick Learner" achievement</span>
+                    <span className="text-gray-400">1d ago</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="w-2 h-2 bg-filipino-red rounded-full"></div>
+                    <span className="text-gray-600">Started Waray lessons</span>
+                    <span className="text-gray-400">2d ago</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Achievements Section */}
+        <div className="lg:col-span-2">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+          >
+            <Card className="glass-effect">
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
                     <motion.div
                       whileHover={{ scale: 1.1, rotate: 5 }}
-                      className="w-8 h-8 bg-filipino-blue rounded-lg flex items-center justify-center"
+                      className="w-10 h-10 bg-filipino-red rounded-lg flex items-center justify-center"
                     >
-                      <Volume2 className="text-white text-sm" />
+                      <Award className="text-white text-lg" />
                     </motion.div>
-                    <h4 className="font-semibold text-gray-800">Audio Settings</h4>
+                    <h3 className="text-xl font-bold text-gray-800">Achievements</h3>
                   </div>
-                  <div className="space-y-4">
-                    <motion.div 
-                      whileHover={{ x: 4 }}
-                      className="flex items-center justify-between"
-                    >
-                      <Label htmlFor="audio-speed" className="text-gray-700">
-                        Audio Playback Speed
-                      </Label>
-                      <Select value={audioSpeed} onValueChange={setAudioSpeed}>
-                        <SelectTrigger className="w-32 glass-effect border-0">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="slow">Slow</SelectItem>
-                          <SelectItem value="normal">Normal</SelectItem>
-                          <SelectItem value="fast">Fast</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </motion.div>
-                    <motion.div 
-                      whileHover={{ x: 4 }}
-                      className="flex items-center justify-between"
-                    >
-                      <Label htmlFor="auto-play" className="text-gray-700">
-                        Auto-play Audio
-                      </Label>
-                      <Switch
-                        id="auto-play"
-                        checked={autoPlayAudio}
-                        onCheckedChange={setAutoPlayAudio}
-                      />
-                    </motion.div>
-                  </div>
-                </motion.div>
-                
-                {/* Learning Preferences */}
-                <div className="bg-white bg-opacity-50 rounded-xl p-6">
-                  <h4 className="font-semibold text-gray-800 mb-4">Learning Preferences</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="daily-goal" className="text-gray-700">
-                        Daily Goal (minutes)
-                      </Label>
-                      <Select 
-                        value={weeklyGoalMinutes.toString()} 
-                        onValueChange={(value) => setWeeklyGoalMinutes(parseInt(value))}
-                      >
-                        <SelectTrigger className="w-32 glass-effect border-0">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="15">15 min</SelectItem>
-                          <SelectItem value="30">30 min</SelectItem>
-                          <SelectItem value="45">45 min</SelectItem>
-                          <SelectItem value="60">60 min</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="notifications" className="text-gray-700">
-                        Push Notifications
-                      </Label>
-                      <Switch
-                        id="notifications"
-                        checked={pushNotifications}
-                        onCheckedChange={setPushNotifications}
-                      />
-                    </div>
-                  </div>
+                  <Badge variant="secondary" className="glass-effect">
+                    {achievements?.length || 0} Earned
+                  </Badge>
                 </div>
                 
-                {/* Account Actions */}
-                <div className="bg-white bg-opacity-50 rounded-xl p-6">
-                  <h4 className="font-semibold text-gray-800 mb-4">Account</h4>
-                  <div className="space-y-3">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start hover:bg-gray-100 hover:bg-opacity-50"
-                      onClick={handleExportData}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {achievements?.map((achievement, index) => (
+                    <motion.div
+                      key={achievement.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02 }}
+                      className="glass-effect rounded-xl p-4 hover:bg-white hover:bg-opacity-30 transition-all"
                     >
-                      <Download className="mr-3 text-filipino-blue" />
-                      Export Learning Data
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start hover:bg-gray-100 hover:bg-opacity-50"
-                      onClick={handleResetProgress}
+                      <div className="flex items-center space-x-4">
+                        <motion.div
+                          whileHover={{ rotate: 360 }}
+                          transition={{ duration: 0.5 }}
+                          className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                            achievement.icon === 'medal' ? 'bg-filipino-yellow' : 'bg-filipino-blue'
+                          }`}
+                        >
+                          {achievement.icon === 'medal' ? (
+                            <Medal className="text-white text-lg" />
+                          ) : (
+                            <Star className="text-white text-lg" />
+                          )}
+                        </motion.div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-gray-800">{achievement.title}</h4>
+                          <p className="text-sm text-gray-600">{achievement.description}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {achievement.earnedAt ? new Date(achievement.earnedAt).toLocaleDateString() : 'Recent'}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-bold text-filipino-blue">+100</div>
+                          <div className="text-xs text-gray-500">Points</div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                  
+                  {/* Placeholder for more achievements */}
+                  {(!achievements || achievements.length < 6) && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: 0.5 }}
+                      className="glass-effect rounded-xl p-4 border-2 border-dashed border-gray-300 flex items-center justify-center"
                     >
-                      <Trash2 className="mr-3 text-filipino-red" />
-                      Reset Progress
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start hover:bg-gray-100 hover:bg-opacity-50"
-                      onClick={handleSignOut}
-                    >
-                      <LogOut className="mr-3 text-gray-600" />
-                      Sign Out
-                    </Button>
-                  </div>
+                      <div className="text-center text-gray-500">
+                        <Trophy className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">More achievements coming soon!</p>
+                      </div>
+                    </motion.div>
+                  )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

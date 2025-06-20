@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRoute, useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, BookOpen, Trophy, ArrowLeft, Heart, MessageCircle } from 'lucide-react';
+import { Play, BookOpen, Trophy, ArrowLeft, Heart, MessageCircle, CheckCircle, Volume2, FileText } from 'lucide-react';
 import LessonInterface from '@/components/lesson-interface';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,28 @@ import { showSuccessAlert, showQuizFeedback } from '@/lib/sweetalert';
 import type { Dialect, Lesson, UserProgress } from '@shared/schema';
 
 export default function Lessons() {
-  const [match, params] = useRoute('/lessons/:dialectId?');
   const [, setLocation] = useLocation();
   const [currentView, setCurrentView] = useState<'list' | 'lesson' | 'quiz'>('list');
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [mascotMessage, setMascotMessage] = useState("Kumusta! Ready to learn some Filipino dialects?");
+  const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set());
+  const dialectRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
-  const dialectId = params?.dialectId ? parseInt(params.dialectId) : null;
+  // Check for dialect scroll parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const dialectId = params.get('dialect');
+    if (dialectId) {
+      const id = parseInt(dialectId);
+      setTimeout(() => {
+        dialectRefs.current[id]?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }, 500);
+    }
+  }, []);
 
   const { data: dialects, isLoading: dialectsLoading } = useQuery<Dialect[]>({
     queryKey: ['/api/dialects'],
@@ -95,7 +109,10 @@ export default function Lessons() {
     const isCorrect = selectedLesson?.quiz?.[0]?.correctAnswer === optionIndex;
     showQuizFeedback(isCorrect);
     
-    if (isCorrect) {
+    if (isCorrect && selectedLesson) {
+      const newSet = new Set(completedLessons);
+      newSet.add(selectedLesson.id);
+      setCompletedLessons(newSet);
       setMascotMessage("Perfect! You really understood that lesson!");
       setTimeout(() => {
         setCurrentView('list');
@@ -104,6 +121,17 @@ export default function Lessons() {
     } else {
       setMascotMessage("Don't worry! Try reviewing the lesson again.");
     }
+  };
+
+  const handleLessonComplete = (lessonId: number) => {
+    const newSet = new Set(completedLessons);
+    newSet.add(lessonId);
+    setCompletedLessons(newSet);
+    showSuccessAlert(
+      'Lesson Complete!',
+      'Great job! You have completed this lesson.'
+    );
+    setCurrentView('list');
   };
 
   const handleBackToList = () => {
@@ -268,6 +296,7 @@ export default function Lessons() {
           return (
             <motion.div
               key={dialect.id}
+              ref={(el) => dialectRefs.current[dialect.id] = el}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: dialectIndex * 0.1 }}
@@ -306,25 +335,56 @@ export default function Lessons() {
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
-                            <div className="text-sm font-bold text-gray-500 w-12">
-                              #{lesson.lessonNumber}
+                            <div className="flex items-center space-x-2">
+                              <div className="text-sm font-bold text-gray-500 w-12">
+                                #{lesson.lessonNumber}
+                              </div>
+                              {completedLessons.has(lesson.id) && (
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+                                >
+                                  <CheckCircle className="w-4 h-4 text-white" />
+                                </motion.div>
+                              )}
                             </div>
                             <div>
-                              <h4 className="font-semibold text-gray-800 group-hover:text-filipino-blue transition-colors">
+                              <h4 className={`font-semibold transition-colors ${
+                                completedLessons.has(lesson.id) 
+                                  ? 'text-green-600' 
+                                  : 'text-gray-800 group-hover:text-filipino-blue'
+                              }`}>
                                 {lesson.title}
                               </h4>
                               <p className="text-sm text-gray-600">{lesson.content}</p>
+                              <div className="flex items-center space-x-2 mt-1">
+                                {lesson.vocabulary && lesson.vocabulary.length > 0 && (
+                                  <div className="flex items-center space-x-1">
+                                    <Volume2 className="w-3 h-3 text-filipino-blue" />
+                                    <span className="text-xs text-gray-500">Audio</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center space-x-1">
+                                  <FileText className="w-3 h-3 text-filipino-yellow" />
+                                  <span className="text-xs text-gray-500">Interactive</span>
+                                </div>
+                              </div>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <Button
                               size="sm"
                               variant="ghost"
-                              className="glass-effect hover:bg-filipino-blue hover:text-white"
+                              className={`glass-effect transition-all ${
+                                completedLessons.has(lesson.id)
+                                  ? 'hover:bg-green-500 hover:text-white'
+                                  : 'hover:bg-filipino-blue hover:text-white'
+                              }`}
                               onClick={() => handleLessonClick(lesson)}
                             >
                               <Play className="w-4 h-4 mr-2" />
-                              Learn
+                              {completedLessons.has(lesson.id) ? 'Review' : 'Learn'}
                             </Button>
                             <Button
                               size="sm"

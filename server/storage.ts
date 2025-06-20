@@ -109,12 +109,20 @@ export class MemStorage implements IStorage {
     });
     this.currentDialectId = 5;
 
-    // Create sample lessons for each dialect
+    // Create comprehensive lessons for each dialect
     dialectsData.forEach((dialect, dialectIndex) => {
       const lessonsData = [
         {
           title: "Basic Greetings",
           content: "Learn essential greetings and polite expressions",
+          type: "audio",
+          parts: [
+            { type: "audio", word: "Kumusta", translation: "Hello/How are you?", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/kumusta.mp3` },
+            { type: "audio", word: "Maayong adlaw", translation: "Good day", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/maayong-adlaw.mp3` },
+            { type: "audio", word: "Maayong gabi", translation: "Good evening", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/maayong-gabi.mp3` },
+            { type: "audio", word: "Paalam", translation: "Goodbye", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/paalam.mp3` },
+            { type: "audio", word: "Salamat", translation: "Thank you", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/salamat.mp3` },
+          ],
           vocabulary: [
             { word: "Kumusta", translation: "Hello/How are you?", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/kumusta.mp3` },
             { word: "Maayong adlaw", translation: "Good day", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/maayong-adlaw.mp3` },
@@ -128,6 +136,15 @@ export class MemStorage implements IStorage {
         {
           title: "Family Terms",
           content: "Learn how to address family members",
+          type: "mixed",
+          parts: [
+            { type: "audio", word: "Tatay", translation: "Father", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/tatay.mp3` },
+            { type: "audio", word: "Nanay", translation: "Mother", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/nanay.mp3` },
+            { type: "text", word: "Kuya", translation: "Older brother", description: "Used to address older male siblings or cousins" },
+            { type: "text", word: "Ate", translation: "Older sister", description: "Used to address older female siblings or cousins" },
+            { type: "text", word: "Lolo", translation: "Grandfather", description: "Respectful term for elderly males" },
+            { type: "text", word: "Lola", translation: "Grandmother", description: "Respectful term for elderly females" },
+          ],
           vocabulary: [
             { word: "Tatay", translation: "Father", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/tatay.mp3` },
             { word: "Nanay", translation: "Mother", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/nanay.mp3` },
@@ -141,6 +158,14 @@ export class MemStorage implements IStorage {
         {
           title: "Numbers 1-10",
           content: "Count from one to ten in " + dialect.name,
+          type: "audio",
+          parts: [
+            { type: "audio", word: "Isa", translation: "One", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/isa.mp3` },
+            { type: "audio", word: "Duha", translation: "Two", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/duha.mp3` },
+            { type: "audio", word: "Tulo", translation: "Three", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/tulo.mp3` },
+            { type: "audio", word: "Upat", translation: "Four", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/upat.mp3` },
+            { type: "audio", word: "Lima", translation: "Five", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/lima.mp3` },
+          ],
           vocabulary: [
             { word: "Isa", translation: "One", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/isa.mp3` },
             { word: "Duha", translation: "Two", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/duha.mp3` },
@@ -154,6 +179,14 @@ export class MemStorage implements IStorage {
         {
           title: "Common Phrases",
           content: "Essential phrases for daily conversation",
+          type: "text",
+          parts: [
+            { type: "text", word: "Mahal kita", translation: "I love you", description: "Expression of deep affection" },
+            { type: "text", word: "Pasensya na", translation: "Sorry/Excuse me", description: "Polite way to apologize" },
+            { type: "text", word: "Pwede ba?", translation: "May I?/Is it okay?", description: "Asking for permission" },
+            { type: "text", word: "Ingat", translation: "Take care", description: "Wishing someone safety" },
+            { type: "text", word: "Sige", translation: "Okay/Alright", description: "Agreement or acknowledgment" },
+          ],
           vocabulary: [
             { word: "Salamat", translation: "Thank you", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/salamat.mp3` },
             { word: "Oo", translation: "Yes", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/oo.mp3` },
@@ -162,6 +195,26 @@ export class MemStorage implements IStorage {
             question: "How do you say 'Thank you'?",
             options: ["Salamat", "Kumusta", "Oo", "Hindi"],
             correctAnswer: 0,
+          }
+        },
+        {
+          title: "Food & Eating",
+          content: "Learn about Filipino food culture and dining",
+          type: "mixed",
+          parts: [
+            { type: "audio", word: "Kaon", translation: "Eat/Food", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/kaon.mp3` },
+            { type: "audio", word: "Tubig", translation: "Water", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/tubig.mp3` },
+            { type: "text", word: "Busog", translation: "Full (satisfied)", description: "When you've eaten enough" },
+            { type: "text", word: "Gutom", translation: "Hungry", description: "Feeling of hunger" },
+          ],
+          vocabulary: [
+            { word: "Kaon", translation: "Eat/Food", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/kaon.mp3` },
+            { word: "Tubig", translation: "Water", audioUrl: `/api/audio/${dialect.name.toLowerCase()}/tubig.mp3` },
+          ],
+          quiz: {
+            question: "What does 'Kaon' mean?",
+            options: ["Sleep", "Eat", "Drink", "Walk"],
+            correctAnswer: 1,
           }
         }
       ];
@@ -174,8 +227,8 @@ export class MemStorage implements IStorage {
           content: lessonData.content,
           audioUrl: `/api/audio/${dialect.name.toLowerCase()}/lesson${index + 1}.mp3`,
           lessonNumber: index + 1,
-          vocabulary: lessonData.vocabulary as any,
-          quiz: [lessonData.quiz] as any,
+          vocabulary: lessonData.vocabulary,
+          quiz: [lessonData.quiz],
         };
         this.lessons.set(lesson.id, lesson);
       });

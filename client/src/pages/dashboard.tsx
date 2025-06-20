@@ -27,12 +27,8 @@ export default function Dashboard() {
     queryKey: ['/api/user/achievements'],
   });
 
-  const handleDialectClick = async (dialect: Dialect) => {
-    await showSuccessAlert(
-      'Opening Lesson',
-      `Starting ${dialect.name} lessons...`
-    );
-    setLocation(`/lessons/${dialect.id}`);
+  const handleDialectClick = (dialect: Dialect) => {
+    setLocation(`/lessons?dialect=${dialect.id}`);
   };
 
   const handleFabClick = () => {
