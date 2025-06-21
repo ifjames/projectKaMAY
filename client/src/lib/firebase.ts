@@ -1,23 +1,40 @@
+// Import Firebase modules
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator } from 'firebase/auth';
+import { getAuth } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDQGEfNSUjO8uND1lX2DgexTfxr0jwS51w",
+  authDomain: "projectkamay.firebaseapp.com",
+  projectId: "projectkamay",
+  storageBucket: "projectkamay.firebasestorage.app",
+  messagingSenderId: "927171432130",
+  appId: "1:927171432130:web:4b4a7b9aa79cfc75c7355b"
 };
 
-// Initialize Firebase - prevent duplicate app error
-export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+// Initialize Firebase app
+const firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firebase Authentication and get a reference to the service
-export const auth = getAuth(app);
+// Initialize Firebase Auth
+const auth = getAuth(firebaseApp);
 
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
+// Initialize Cloud Firestore
+const db = getFirestore(firebaseApp);
 
-// Use production Firebase services - no emulators
+// Suppress Firebase network errors in development
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  // Override console.warn to filter out Firebase network noise
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    const message = args.join(' ');
+    if (message.includes('ERR_BLOCKED_BY_CLIENT') || 
+        message.includes('webchannel_blob_es2018') ||
+        message.includes('firestore.googleapis.com')) {
+      return; // Suppress these specific Firebase network warnings
+    }
+    originalWarn.apply(console, args);
+  };
+}
+
+// Export instances
+export { firebaseApp as app, auth, db };

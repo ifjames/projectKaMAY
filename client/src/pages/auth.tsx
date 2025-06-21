@@ -121,8 +121,8 @@ export default function Auth() {
               className="absolute inset-0 bg-white bg-opacity-20 rounded-full"
             />
           </motion.div>
-          <h1 className="text-3xl font-bold text-gray-800">KaMAY</h1>
-          <p className="text-gray-600">Learn Filipino Dialects</p>
+          <h1 className="text-3xl font-bold text-foreground">KaMAY</h1>
+          <p className="text-muted-foreground">Learn Filipino Dialects</p>
         </motion.div>
 
         <Card className="glass-effect shadow-2xl">
@@ -135,7 +135,7 @@ export default function Auth() {
                 className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                   isLogin 
                     ? 'bg-filipino-blue text-white shadow-lg' 
-                    : 'text-gray-600 hover:text-filipino-blue'
+                    : 'text-muted-foreground hover:text-filipino-blue'
                 }`}
               >
                 Sign In
@@ -146,7 +146,7 @@ export default function Auth() {
                 className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
                   !isLogin 
                     ? 'bg-filipino-blue text-white shadow-lg' 
-                    : 'text-gray-600 hover:text-filipino-blue'
+                    : 'text-muted-foreground hover:text-filipino-blue'
                 }`}
               >
                 Sign Up
@@ -163,7 +163,7 @@ export default function Auth() {
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Label htmlFor="displayName" className="text-gray-700">Full Name</Label>
+                    <Label htmlFor="displayName" className="text-foreground">Full Name</Label>
                     <div className="relative">
                       <Input
                         id="displayName"
@@ -175,14 +175,14 @@ export default function Auth() {
                         className="glass-effect border-0 pl-10"
                         placeholder="Enter your full name"
                       />
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
 
               <div>
-                <Label htmlFor="email" className="text-gray-700">Email</Label>
+                <Label htmlFor="email" className="text-foreground">Email</Label>
                 <div className="relative">
                   <Input
                     id="email"
@@ -194,12 +194,12 @@ export default function Auth() {
                     className="glass-effect border-0 pl-10"
                     placeholder="Enter your email"
                   />
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="password" className="text-gray-700">Password</Label>
+                <Label htmlFor="password" className="text-foreground">Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
@@ -211,11 +211,11 @@ export default function Auth() {
                     className="glass-effect border-0 pl-10 pr-10"
                     placeholder="Enter your password"
                   />
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -231,7 +231,7 @@ export default function Auth() {
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Label htmlFor="confirmPassword" className="text-gray-700">Confirm Password</Label>
+                    <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
                     <div className="relative">
                       <Input
                         id="confirmPassword"
@@ -243,7 +243,7 @@ export default function Auth() {
                         className="glass-effect border-0 pl-10"
                         placeholder="Confirm your password"
                       />
-                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                     </div>
                   </motion.div>
                 )}
@@ -271,7 +271,7 @@ export default function Auth() {
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                  <span className="px-2 bg-white text-muted-foreground">Or continue with</span>
                 </div>
               </div>
 
@@ -298,7 +298,7 @@ export default function Auth() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.5 }}
-          className="text-center text-sm text-gray-600 mt-6"
+          className="text-center text-sm text-muted-foreground mt-6"
         >
           By signing up, you agree to learn and preserve Filipino dialects with respect and cultural appreciation.
         </motion.p>

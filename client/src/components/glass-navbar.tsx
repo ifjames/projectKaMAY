@@ -16,7 +16,6 @@ export default function GlassNavbar() {
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/lessons', label: 'Lessons' },
     { href: '/profile', label: 'Profile' },
-    { href: '/settings', label: 'Settings' },
   ];
 
   const isActive = (href: string) => {
@@ -48,14 +47,14 @@ export default function GlassNavbar() {
             <div className="w-10 h-10 bg-gradient-to-r from-filipino-blue to-filipino-red rounded-xl flex items-center justify-center">
               <Languages className="text-white text-xl" />
             </div>
-            <h1 className="text-xl font-bold text-gray-800">KaMAY</h1>
+            <h1 className="text-xl font-bold text-foreground">KaMAY</h1>
           </Link>
           
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
-                <span className={`text-gray-700 hover:text-filipino-blue transition-colors font-medium cursor-pointer ${
+                <span className={`text-foreground hover:text-filipino-blue transition-colors font-medium cursor-pointer ${
                   isActive(item.href) ? 'text-filipino-blue' : ''
                 }`}>
                   {item.label}
@@ -77,7 +76,7 @@ export default function GlassNavbar() {
                     <User className="w-4 h-4 text-white" />
                   </div>
                 )}
-                <span className="text-gray-700 font-medium hidden lg:block">
+                <span className="text-foreground font-medium hidden lg:block">
                   {userData?.displayName || currentUser?.displayName || 'User'}
                 </span>
               </div>
@@ -86,7 +85,7 @@ export default function GlassNavbar() {
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
-                className="text-gray-700 hover:text-filipino-red hover:bg-white hover:bg-opacity-20"
+                className="text-foreground hover:text-filipino-red hover:bg-white hover:bg-opacity-20"
               >
                 <LogOut className="w-4 h-4" />
               </Button>
@@ -101,9 +100,9 @@ export default function GlassNavbar() {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? (
-              <X className="text-gray-700" />
+              <X className="text-foreground" />
             ) : (
-              <Menu className="text-gray-700" />
+              <Menu className="text-foreground" />
             )}
           </Button>
         </div>
@@ -121,7 +120,7 @@ export default function GlassNavbar() {
                 {navItems.map((item) => (
                   <Link key={item.href} href={item.href}>
                     <span 
-                      className={`text-gray-700 hover:text-filipino-blue transition-colors font-medium py-2 block cursor-pointer ${
+                      className={`text-foreground hover:text-filipino-blue transition-colors font-medium py-2 block cursor-pointer ${
                         isActive(item.href) ? 'text-filipino-blue' : ''
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}

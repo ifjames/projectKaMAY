@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   User,
   signInWithEmailAndPassword,
@@ -11,6 +11,11 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
+
+// Initialize auth
+if (!auth) {
+  console.error("Firebase auth is not initialized properly");
+}
 
 interface UserData {
   uid: string;
@@ -26,6 +31,12 @@ interface UserData {
       achievementsEarned: string[];
       streak: number;
     };
+  };
+  settings?: {
+    audioSpeed?: string;
+    autoPlayAudio?: boolean;
+    pushNotifications?: boolean;
+    weeklyGoalMinutes?: number;
   };
 }
 
@@ -65,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         uid: user.uid,
         email: user.email!,
         displayName,
-        photoURL: user.photoURL || undefined,
+        ...(user.photoURL && { photoURL: user.photoURL }),
         createdAt: new Date(),
         lastLoginAt: new Date(),
         learningProgress: {},
@@ -73,6 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       await setDoc(doc(db, 'users', user.uid), userDoc);
       console.log('User document created in Firestore');
+      
+      console.log('User setup complete');
     } catch (error: any) {
       console.error('Firebase signup error:', error);
       console.error('Error code:', error.code);
@@ -103,13 +116,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         uid: user.uid,
         email: user.email!,
         displayName: user.displayName || 'User',
-        photoURL: user.photoURL || undefined,
+        ...(user.photoURL && { photoURL: user.photoURL }),
         createdAt: new Date(),
         lastLoginAt: new Date(),
         learningProgress: {},
       };
       
       await setDoc(userDocRef, userDoc);
+      
+      console.log('Google user setup complete');
     } else {
       // Update last login time
       await setDoc(userDocRef, {
@@ -125,33 +140,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function updateUserProfile(displayName: string, photoURL?: string) {
     if (currentUser) {
       await updateProfile(currentUser, { displayName, photoURL });
-      await setDoc(doc(db, 'users', currentUser.uid), {
-        displayName,
-        photoURL,
-      }, { merge: true });
+      const updateData: any = { displayName };
+      if (photoURL) {
+        updateData.photoURL = photoURL;
+      }
+      await setDoc(doc(db, 'users', currentUser.uid), updateData, { merge: true });
     }
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
-      
-      if (user) {
-        // Fetch user data from Firestore
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDocSnap = await getDoc(userDocRef);
+    // Make sure auth is initialized before setting up the listener
+    console.log("Setting up auth state listener");
+    
+    let unsubscribe: () => void;
+    
+    try {
+      unsubscribe = onAuthStateChanged(auth, async (user) => {
+        console.log("Auth state changed:", user ? `User: ${user.uid}` : "No user");
+        setCurrentUser(user);
         
-        if (userDocSnap.exists()) {
-          setUserData(userDocSnap.data() as UserData);
+        if (user) {
+          // Fetch user data from Firestore
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          
+          if (userDocSnap.exists()) {
+            setUserData(userDocSnap.data() as UserData);
+          }
+        } else {
+          setUserData(null);
         }
-      } else {
-        setUserData(null);
-      }
-      
+        
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error("Error setting up auth state listener:", error);
       setLoading(false);
-    });
+    }
 
-    return unsubscribe;
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const value = {

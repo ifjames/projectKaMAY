@@ -25,7 +25,7 @@ export default function ProgressRing({
         height={size}
       >
         <circle
-          className="text-gray-200"
+          className="text-gray-200 dark:text-gray-600"
           stroke="currentColor"
           strokeWidth={strokeWidth}
           fill="transparent"
@@ -48,7 +48,7 @@ export default function ProgressRing({
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm font-bold text-gray-700">
+        <span className="text-sm font-bold text-foreground">
           {Math.round(progress)}%
         </span>
       </div>

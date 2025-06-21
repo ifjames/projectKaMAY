@@ -2,8 +2,22 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let text = '';
+    try {
+      text = (await res.text()) || res.statusText;
+    } catch (e) {
+      text = res.statusText;
+    }
+    
+    // Log error for debugging
+    console.warn(`API Request failed: ${res.status}: ${text}`);
+    
+    // Always throw the actual error, but with user-friendly message for UI
+    const errorMessage = res.status >= 400 && res.status < 500 
+      ? `Request failed: ${text || 'Please check your input and try again'}`
+      : `Network error: Please check your connection and try again`;
+      
+    throw new Error(errorMessage);
   }
 }
 
@@ -44,11 +58,13 @@ export const getQueryFn: <T>(options: {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
       refetchOnWindowFocus: false,
-      staleTime: Infinity,
-      retry: false,
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors (client errors)
+        if (error?.message?.includes('4')) return false;
+        return failureCount < 2;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
     mutations: {
       retry: false,

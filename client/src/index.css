@@ -28,6 +28,9 @@
   --filipino-red: hsl(0, 77%, 49%);
   --filipino-blue: hsl(220, 85%, 57%);
   --filipino-yellow: hsl(38, 92%, 50%);
+  
+  /* Select arrow colors */
+  --select-arrow-color: #374151;
 }
 
 .dark {
@@ -51,6 +54,9 @@
   --destructive-foreground: hsl(0, 0%, 98%);
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
+  
+  /* Select arrow colors */
+  --select-arrow-color: #ffffff;
 }
 
 @layer base {
@@ -71,10 +77,22 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
   
+  .dark .glass-effect {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
   .glass-navbar {
-    background: rgba(37, 99, 235, 0.1);
+    background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(15px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .dark .glass-navbar {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
   
   .cultural-pattern {
@@ -109,6 +127,61 @@
   @keyframes wave {
     0%, 100% { transform: scaleY(1); }
     50% { transform: scaleY(1.5); }
+  }
+  
+  /* Enhanced card styling for better dark mode */
+  .card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .card {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Enhanced native select styling to match glass effect design */
+  select.glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: inherit;
+    /* Remove all default appearances first */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    /* Default arrow for light mode - using darker color for better visibility */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23111827' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+  }
+  
+  /* Remove IE arrow */
+  select.glass-effect::-ms-expand {
+    display: none;
+  }
+  
+  .dark select.glass-effect {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* Dark mode arrow */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 8px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+  }
+  
+  /* Force proper option styling for both light and dark modes */
+  select.glass-effect option {
+    background: white !important;
+    color: black !important;
+    padding: 8px 12px;
+  }
+  
+  .dark select.glass-effect option {
+    background: #1a1a1a !important;
+    color: white !important;
   }
 }
 

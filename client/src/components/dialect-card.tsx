@@ -35,15 +35,15 @@ export default function DialectCard({ dialect, progress, onClick }: DialectCardP
         onClick={onClick}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-bold text-gray-800">{dialect.name}</h3>
+          <h3 className="text-xl font-bold text-foreground">{dialect.name}</h3>
           <ProgressRing 
             progress={progressPercentage} 
             color={getColorValue(dialect.color)}
           />
         </div>
-        <p className="text-gray-600 mb-4">{dialect.description}</p>
+        <p className="text-muted-foreground mb-4">{dialect.description}</p>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             {lessonsCompleted}/{dialect.totalLessons} lessons
           </span>
           <ArrowRight className={`text-lg transition-colors`} style={{ color: getColorValue(dialect.color) }} />

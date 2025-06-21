@@ -61,6 +61,11 @@ export default {
           border: "var(--sidebar-border)",
           ring: "var(--sidebar-ring)",
         },
+        // Filipino theme colors
+        'filipino-blue': '#1e40af',
+        'filipino-red': '#dc2626',
+        'filipino-yellow': '#f59e0b',
+        'filipino-green': '#059669',
       },
       keyframes: {
         "accordion-down": {

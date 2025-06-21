@@ -37,10 +37,10 @@ export const showInfoAlert = (title: string, text: string) => {
   });
 };
 
-export const showQuizFeedback = (isCorrect: boolean) => {
+export const showQuizFeedback = (isCorrect: boolean, customMessage?: string) => {
   return Swal.fire({
     title: isCorrect ? 'Correct!' : 'Try Again',
-    text: isCorrect ? 'Great job! You got it right.' : 'That\'s not quite right. Try again!',
+    text: customMessage || (isCorrect ? 'Great job! You got it right.' : 'That\'s not quite right. Try again!'),
     icon: isCorrect ? 'success' : 'error',
     timer: 2000,
     showConfirmButton: false,
@@ -61,34 +61,30 @@ export const showConfirmAlert = (title: string, text: string, confirmText = 'Yes
   });
 };
 
-export const showQuickActions = () => {
+export const showLessonCompleteAlert = (lessonTitle: string, nextLessonTitle?: string) => {
   return Swal.fire({
-    title: 'Quick Actions',
-    html: `
-      <div class="grid grid-cols-2 gap-4 mt-4">
-        <button class="p-4 bg-blue-100 rounded-xl hover:bg-blue-200 transition-colors" data-action="lesson">
-          <i class="fas fa-book text-blue-600 text-xl mb-2 block"></i>
-          <span class="text-sm">Start Lesson</span>
-        </button>
-        <button class="p-4 bg-red-100 rounded-xl hover:bg-red-200 transition-colors" data-action="practice">
-          <i class="fas fa-microphone text-red-600 text-xl mb-2 block"></i>
-          <span class="text-sm">Practice Speaking</span>
-        </button>
-        <button class="p-4 bg-yellow-100 rounded-xl hover:bg-yellow-200 transition-colors" data-action="quiz">
-          <i class="fas fa-brain text-yellow-600 text-xl mb-2 block"></i>
-          <span class="text-sm">Quick Quiz</span>
-        </button>
-        <button class="p-4 bg-green-100 rounded-xl hover:bg-green-200 transition-colors" data-action="progress">
-          <i class="fas fa-chart-line text-green-600 text-xl mb-2 block"></i>
-          <span class="text-sm">View Progress</span>
-        </button>
-      </div>
-    `,
-    showConfirmButton: false,
-    showCloseButton: true,
+    title: 'Lesson Complete! 🎉',
+    text: `Great job completing "${lessonTitle}"!${nextLessonTitle ? ` Next up: "${nextLessonTitle}"` : ''}`,
+    icon: 'success',
+    confirmButtonText: 'Continue Learning',
+    confirmButtonColor: '#1e40af',
     background: 'rgba(255, 255, 255, 0.95)',
     customClass: {
       popup: 'rounded-2xl'
     }
+  });
+};
+
+export const showProgressAlert = (progress: number, dialectName: string) => {
+  return Swal.fire({
+    title: `${dialectName} Progress`,
+    text: `You're ${Math.round(progress)}% through this dialect!`,
+    icon: 'info',
+    timer: 2000,
+    showConfirmButton: false,
+    position: 'top-end',
+    toast: true,
+    background: 'rgba(34, 197, 94, 0.95)',
+    color: 'white'
   });
 };

@@ -16,12 +16,16 @@ export default defineConfig({
         ]
       : []),
   ],
+  optimizeDeps: {
+    include: ['react', 'react-dom', '@tanstack/react-query']
+  },
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
+    dedupe: ['react', 'react-dom']
   },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
@@ -29,6 +33,9 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    hmr: {
+      overlay: false
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],

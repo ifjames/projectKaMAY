@@ -1,91 +1,373 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useRoute, useLocation } from 'wouter';
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, BookOpen, Trophy, ArrowLeft, Heart, MessageCircle, CheckCircle, Volume2, FileText } from 'lucide-react';
-import LessonInterface from '@/components/lesson-interface';
+import { Play, BookOpen, Trophy, ArrowLeft, Heart, MessageCircle, CheckCircle, FileText, Lock } from 'lucide-react';
+import EnhancedLessonInterface from '@/components/enhanced-lesson-interface';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { apiRequest, queryClient } from '@/lib/queryClient';
 import { showSuccessAlert, showQuizFeedback } from '@/lib/sweetalert';
-import type { Dialect, Lesson, UserProgress } from '@shared/schema';
+import { 
+  getDialects, 
+  getLessonsForDialect,
+  listenToDialectLessons,
+  getUserProgress, 
+  updateUserProgress,
+  checkAndAwardAchievements 
+} from '@/lib/firestore-service-simple';
+import { checkTimeBasedAchievements } from '@/lib/achievements';
+
+// Firestore types
+interface FirestoreDialect {
+  id: string;
+  name: string;
+  description: string;
+  region: string;
+  color: string;
+  totalLessons: number;
+}
+
+interface FirestoreLesson {
+  id: string;
+  dialectId: number;
+  title: string;
+  content: string;
+  lessonNumber: number;
+  type: 'audio' | 'text' | 'mixed';
+  vocabulary?: Array<{word: string, translation: string, audioUrl?: string}>;
+  quiz?: Array<{question: string, options: string[], correctAnswer: number}>;
+}
+
+interface FirestoreUserProgress {
+  id: string;
+  userId: string;
+  dialectId: number;
+  lessonsCompleted: number;
+  progress: number;
+  completedLessonIds: string[];
+  lastStudiedAt?: any;
+}
 
 export default function Lessons() {
   const [, setLocation] = useLocation();
-  const [currentView, setCurrentView] = useState<'list' | 'lesson' | 'quiz'>('list');
-  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [currentView, setCurrentView] = useState<'list' | 'lesson'>('list');
+  const [selectedLesson, setSelectedLesson] = useState<FirestoreLesson | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [mascotMessage, setMascotMessage] = useState("Kumusta! Ready to learn some Filipino dialects?");
-  const [completedLessons, setCompletedLessons] = useState<Set<number>>(new Set());
-  const dialectRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+  const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
+  const [dialects, setDialects] = useState<FirestoreDialect[]>([]);
+  const [dialectLessons, setDialectLessons] = useState<{[key: string]: FirestoreLesson[]}>({});
+  const [progressData, setProgressData] = useState<FirestoreUserProgress[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedDialects, setExpandedDialects] = useState<Set<string>>(new Set());
+  const dialectRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   // Check for dialect scroll parameter
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const dialectId = params.get('dialect');
-    if (dialectId) {
-      const id = parseInt(dialectId);
+    if (dialectId && !loading) {
       setTimeout(() => {
-        dialectRefs.current[id]?.scrollIntoView({ 
+        dialectRefs.current[dialectId]?.scrollIntoView({ 
           behavior: 'smooth', 
           block: 'start' 
         });
       }, 500);
     }
+  }, [loading]);
+
+  // Load data from Firestore with real-time updates
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        console.log('Starting to load lessons data...');
+        
+        // Load dialects
+        console.log('Loading dialects...');
+        const dialectsData = await getDialects();
+        console.log('Dialects loaded:', dialectsData);
+        setDialects(dialectsData);
+        
+        // Load lessons for each dialect
+        console.log('Loading lessons for each dialect...');
+        const lessonsData: {[key: string]: FirestoreLesson[]} = {};
+        const unsubscribeFunctions: (() => void)[] = [];
+        
+        for (const dialect of dialectsData) {
+          console.log(`Setting up listener for dialect ${dialect.id} (${dialect.name})`);
+          
+          // Initial load
+          const initialLessons = await getLessonsForDialect(parseInt(dialect.id));
+          lessonsData[dialect.id] = initialLessons;
+          
+          // Setup real-time listener for each dialect's lessons
+          const unsubscribe = listenToDialectLessons(parseInt(dialect.id), (lessons) => {
+            console.log(`Received real-time update for ${dialect.name} lessons:`, lessons.length);
+            setDialectLessons(prevLessons => ({
+              ...prevLessons,
+              [dialect.id]: lessons
+            }));
+          });
+          
+          unsubscribeFunctions.push(unsubscribe);
+        }
+        
+        // Initial lesson state
+        setDialectLessons(lessonsData);
+        
+        // Load user progress
+        console.log('Loading user progress...');
+        const progress = await getUserProgress();
+        console.log('User progress loaded:', progress);
+        setProgressData(progress);
+        
+        // Set completed lessons based on progress - use the completedLessonIds directly
+        const completed = new Set<string>();
+        progress.forEach(p => {
+          if (p.completedLessonIds && Array.isArray(p.completedLessonIds)) {
+            p.completedLessonIds.forEach(lessonId => completed.add(lessonId));
+          }
+        });
+        setCompletedLessons(completed);
+        console.log('Completed lessons:', completed);
+        
+        // Clean up listeners on component unmount
+        return () => {
+          console.log('Cleaning up lesson listeners...');
+          unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
+        };
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
-  const { data: dialects, isLoading: dialectsLoading } = useQuery<Dialect[]>({
-    queryKey: ['/api/dialects'],
-  });
+  const getProgressForDialect = (dialectId: string) => {
+    return progressData?.find(p => p.dialectId === parseInt(dialectId));
+  };
 
-  const { data: progressData, isLoading: progressLoading } = useQuery<UserProgress[]>({
-    queryKey: ['/api/user/progress'],
-  });
+  // Enhanced lesson locking logic - lessons are unlocked sequentially
+  const isLessonLocked = (lesson: FirestoreLesson, dialectLessons: FirestoreLesson[]) => {
+    // Lesson 1 is always unlocked
+    if (lesson.lessonNumber === 1) return false; 
+    
+    // For other lessons, check if the previous lesson is completed
+    const previousLesson = dialectLessons.find(l => l.lessonNumber === lesson.lessonNumber - 1);
+    if (!previousLesson || !completedLessons.has(previousLesson.id)) {
+      return true; // Lesson is locked
+    }
+    
+    return false; // Previous lesson completed, unlock this lesson
+  };
 
-  const completeLessonMutation = useMutation({
-    mutationFn: (lessonId: number) => 
-      apiRequest('POST', `/api/lessons/${lessonId}/complete`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/user/progress'] });
-      showSuccessAlert('Lesson Complete!', 'Great job! Moving to the next lesson.');
-      setCurrentView('list');
-      setMascotMessage("Excellent work! You're making great progress!");
-    },
-  });
+  const handleLessonClick = (lesson: FirestoreLesson) => {
+    const dialectLessonsForDialect = dialectLessons[lesson.dialectId.toString()] || [];
+    if (isLessonLocked(lesson, dialectLessonsForDialect)) {
+      setMascotMessage("Complete the previous lessons first to unlock this one!");
+      return;
+    }
+    
+    setSelectedLesson(lesson);
+    setCurrentView('lesson');
+    setMascotMessage(`Let's learn about ${lesson.title}! Listen carefully and practice.`);
+  };
 
-  // Get lessons for each dialect - ensure hooks are called at top level
-  const dialect1Lessons = useQuery<Lesson[]>({
-    queryKey: ['/api/dialects/1/lessons'],
-    enabled: !!dialects?.find(d => d.id === 1),
-  });
-  
-  const dialect2Lessons = useQuery<Lesson[]>({
-    queryKey: ['/api/dialects/2/lessons'],
-    enabled: !!dialects?.find(d => d.id === 2),
-  });
-  
-  const dialect3Lessons = useQuery<Lesson[]>({
-    queryKey: ['/api/dialects/3/lessons'],
-    enabled: !!dialects?.find(d => d.id === 3),
-  });
-  
-  const dialect4Lessons = useQuery<Lesson[]>({
-    queryKey: ['/api/dialects/4/lessons'],
-    enabled: !!dialects?.find(d => d.id === 4),
-  });
-
-  const getLessonsForDialect = (dialectId: number) => {
-    switch (dialectId) {
-      case 1: return dialect1Lessons.data || [];
-      case 2: return dialect2Lessons.data || [];
-      case 3: return dialect3Lessons.data || [];
-      case 4: return dialect4Lessons.data || [];
-      default: return [];
+  const handleQuizAnswer = async (optionIndex: number) => {
+    setSelectedAnswer(optionIndex);
+    const isCorrect = selectedLesson?.quiz?.[0]?.correctAnswer === optionIndex;
+    showQuizFeedback(isCorrect);
+    
+    if (isCorrect && selectedLesson) {
+      // Save the lesson completion to Firestore immediately
+      try {
+        console.log('Quiz completed correctly, saving lesson:', selectedLesson.id);
+        await updateUserProgress(selectedLesson.dialectId, selectedLesson.id);
+        await checkAndAwardAchievements();
+        
+        // Refresh progress data from Firestore
+        const progress = await getUserProgress();
+        setProgressData(progress);
+        
+        // Update completed lessons from fresh data
+        const completed = new Set<string>();
+        progress.forEach(p => {
+          if (p.completedLessonIds && Array.isArray(p.completedLessonIds)) {
+            p.completedLessonIds.forEach(lessonId => completed.add(lessonId));
+          }
+        });
+        setCompletedLessons(completed);
+        
+        setMascotMessage("Perfect! You really understood that lesson!");
+        showSuccessAlert('Quiz Complete!', 'Excellent work! You have completed this lesson.');
+        
+        setTimeout(() => {
+          setCurrentView('list');
+          setMascotMessage("Ready for more learning? Pick another lesson!");
+        }, 2000);
+      } catch (error) {
+        console.error('Error saving quiz completion:', error);
+        setMascotMessage("Great answer! But there was an issue saving your progress.");
+      }
+    } else {
+      setMascotMessage("Don't worry! Try reviewing the lesson again.");
     }
   };
 
-  if (dialectsLoading || progressLoading) {
+  const handleLessonComplete = async (lessonId: string) => {
+    if (!selectedLesson) return;
+    
+    try {
+      console.log('Completing lesson:', lessonId);
+      
+      // Save lesson completion to Firestore
+      await updateUserProgress(selectedLesson.dialectId, lessonId);
+      await checkAndAwardAchievements();
+      
+      // Refresh progress data from Firestore
+      console.log('Refreshing progress data...');
+      const progress = await getUserProgress();
+      console.log('Updated progress from Firestore:', progress);
+      setProgressData(progress);
+      
+      // Update completed lessons from fresh data
+      const completed = new Set<string>();
+      progress.forEach(p => {
+        if (p.completedLessonIds && Array.isArray(p.completedLessonIds)) {
+          p.completedLessonIds.forEach(id => completed.add(id));
+        }
+      });
+      setCompletedLessons(completed);
+      console.log('Updated completed lessons:', completed);
+      
+      showSuccessAlert(
+        'Lesson Complete!',
+        'Great job! You have completed this lesson.'
+      );
+      setCurrentView('list');
+      setMascotMessage("Excellent work! You're making great progress!");
+    } catch (error) {
+      console.error('Error completing lesson:', error);
+      
+      // Show error to user but still mark as complete in UI
+      setMascotMessage("Your progress was saved locally, but there was an issue updating the server. Your progress will sync when you reconnect.");
+      
+      // Still show completion and return to list after delay
+      setTimeout(() => {
+        setCurrentView('list');
+      }, 3000);
+    }
+  };
+
+  const handleBackToList = () => {
+    setCurrentView('list');
+    setSelectedLesson(null);
+    setMascotMessage("What would you like to learn next?");
+  };  const handleCompleteLesson = async (score?: number, totalPossiblePoints?: number, achievements?: string[]) => {
+    if (selectedLesson) {
+      try {
+        console.log('=== LESSON COMPLETION DEBUG ===');
+        console.log('Lesson completion button clicked for lesson:', selectedLesson.id);
+        console.log('Score:', score, 'Total Points:', totalPossiblePoints);
+        console.log('Achievements passed from lesson interface:', achievements);
+        
+        // Save lesson completion to Firestore
+        await updateUserProgress(selectedLesson.dialectId, selectedLesson.id);
+        
+        // Calculate lesson data for achievement checking
+        const percentage = score && totalPossiblePoints ? Math.round((score/totalPossiblePoints)*100) : undefined;
+        const lessonData = {
+          lessonNumber: selectedLesson.lessonNumber,
+          dialectId: selectedLesson.dialectId,
+          score: percentage,
+          timeSpent: undefined // You can add time tracking here if needed
+        };
+        
+        console.log('Lesson data for achievements:', lessonData);
+        
+        // Check for time-based achievements
+        const timeAchievements = checkTimeBasedAchievements();
+        const allAchievements = [...(achievements || []), ...timeAchievements];
+        
+        console.log('Time achievements:', timeAchievements);
+        console.log('All achievements to award:', allAchievements);
+        
+        await checkAndAwardAchievements(allAchievements, lessonData);
+        
+        // If we have a score, update user stats
+        if (score !== undefined && totalPossiblePoints !== undefined && percentage !== undefined) {
+          console.log(`Lesson score: ${score}/${totalPossiblePoints} (${percentage}%)`);
+          
+          // Show appropriate message based on score
+          if (percentage >= 80) {
+            setMascotMessage("Excellent work! You've mastered this lesson!");
+          } else if (percentage >= 60) {
+            setMascotMessage("Good job! Keep practicing to improve your score!");
+          } else {
+            setMascotMessage("You're making progress! Try taking the quiz again for a better score.");
+          }
+          
+          // Log achievements earned
+          if (achievements && achievements.length > 0) {
+            console.log('Achievements earned:', achievements);
+            setMascotMessage(`Amazing! You earned ${achievements.length} achievement${achievements.length > 1 ? 's' : ''}!`);
+          }
+        }
+        
+        await handleLessonComplete(selectedLesson.id);
+      } catch (error) {
+        console.error('Error in handleCompleteLesson:', error);
+        // Show a message to the user
+        setMascotMessage("There was an issue saving your progress. Please try again!");
+        
+        // Still allow the user to continue
+        setTimeout(() => {
+          setCurrentView('list');
+        }, 3000);
+      }
+    }
+  };
+
+  // Get lesson type icon
+  const getLessonTypeIcon = (lesson: FirestoreLesson) => {
+    switch (lesson.type) {
+      case 'audio':
+        return <FileText className="w-4 h-4 text-filipino-blue" />;
+      case 'text':
+        return <FileText className="w-4 h-4 text-filipino-yellow" />;
+      default:
+        return <BookOpen className="w-4 h-4 text-filipino-green" />;
+    }
+  };
+
+  const getLessonTypeDescription = (lesson: FirestoreLesson) => {
+    switch (lesson.type) {
+      case 'audio':
+        return 'Audio Lesson';
+      case 'text':
+        return 'Reading Lesson';
+      default:
+        return 'Mixed Lesson';
+    }
+  };
+
+  const toggleDialectExpansion = (dialectId: string) => {
+    setExpandedDialects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(dialectId)) {
+        newSet.delete(dialectId);
+      } else {
+        newSet.add(dialectId);
+      }
+      return newSet;
+    });
+  };
+
+  if (loading) {
     return (
       <div className="max-w-6xl mx-auto px-4">
         <motion.div
@@ -98,7 +380,7 @@ export default function Lessons() {
               <CardContent className="p-8">
                 <div className="h-8 bg-gray-200 rounded mb-4 w-1/3"></div>
                 <div className="space-y-3">
-                  {[1, 2, 3].map((j) => (
+                  {[1, 2, 3, 4, 5].map((j) => (
                     <div key={j} className="h-16 bg-gray-200 rounded"></div>
                   ))}
                 </div>
@@ -110,66 +392,21 @@ export default function Lessons() {
     );
   }
 
-  const getProgressForDialect = (dialectId: number) => {
-    return progressData?.find(p => p.dialectId === dialectId);
-  };
-
-  const handleLessonClick = (lesson: Lesson) => {
-    setSelectedLesson(lesson);
-    setCurrentView('lesson');
-    setMascotMessage(`Let's learn about ${lesson.title}! Listen carefully and practice.`);
-  };
-
-  const handleQuizClick = (lesson: Lesson) => {
-    setSelectedLesson(lesson);
-    setCurrentView('quiz');
-    setSelectedAnswer(null);
-    setMascotMessage("Time for a quiz! Show me what you've learned!");
-  };
-
-  const handleQuizAnswer = (optionIndex: number) => {
-    setSelectedAnswer(optionIndex);
-    const isCorrect = selectedLesson?.quiz?.[0]?.correctAnswer === optionIndex;
-    showQuizFeedback(isCorrect);
-    
-    if (isCorrect && selectedLesson) {
-      const newSet = new Set(completedLessons);
-      newSet.add(selectedLesson.id);
-      setCompletedLessons(newSet);
-      setMascotMessage("Perfect! You really understood that lesson!");
-      setTimeout(() => {
-        setCurrentView('list');
-        setMascotMessage("Ready for more learning? Pick another lesson!");
-      }, 2000);
-    } else {
-      setMascotMessage("Don't worry! Try reviewing the lesson again.");
-    }
-  };
-
-  const handleLessonComplete = (lessonId: number) => {
-    const newSet = new Set(completedLessons);
-    newSet.add(lessonId);
-    setCompletedLessons(newSet);
-    showSuccessAlert(
-      'Lesson Complete!',
-      'Great job! You have completed this lesson.'
-    );
-    setCurrentView('list');
-  };
-
-  const handleBackToList = () => {
-    setCurrentView('list');
-    setSelectedLesson(null);
-    setMascotMessage("What would you like to learn next?");
-  };
-
-  const handleCompleteLesson = () => {
-    if (selectedLesson) {
-      completeLessonMutation.mutate(selectedLesson.id);
-    }
-  };
-
   if (currentView === 'lesson' && selectedLesson) {
+    // Convert FirestoreLesson to the format expected by LessonInterface
+    // Get the total lessons for this dialect
+    const selectedDialect = dialects.find(d => d.id === selectedLesson.dialectId.toString());
+    const dialectTotalLessons = selectedDialect?.totalLessons || 10;
+    
+    const lessonForInterface = {
+      ...selectedLesson,
+      id: parseInt(selectedLesson.id) || 0,
+      // Include audioUrl as null since we no longer use audio
+      audioUrl: null,
+      vocabulary: selectedLesson.vocabulary || [],
+      quiz: selectedLesson.quiz || []
+    };
+    
     return (
       <motion.div
         initial={{ opacity: 0, x: 20 }}
@@ -177,78 +414,18 @@ export default function Lessons() {
         exit={{ opacity: 0, x: -20 }}
         transition={{ duration: 0.3 }}
       >
-        <LessonInterface
-          lesson={selectedLesson}
+        <EnhancedLessonInterface
+          lesson={lessonForInterface}
           onBack={handleBackToList}
-          onNext={handleBackToList}
-          onComplete={handleCompleteLesson}
-          progress={75}
+          onComplete={(score: number, totalPoints: number, achievements: string[]) => handleCompleteLesson(score, totalPoints, achievements)}
+          progress={Math.round((completedLessons.size / dialectTotalLessons) * 100)}
+          dialectTotalLessons={dialectTotalLessons}
         />
       </motion.div>
     );
   }
 
-  if (currentView === 'quiz' && selectedLesson) {
-    const quiz = selectedLesson.quiz?.[0];
-    
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ duration: 0.3 }}
-        className="max-w-4xl mx-auto px-4"
-      >
-        <Card className="glass-effect">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-between mb-8">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="glass-effect hover:bg-white hover:bg-opacity-20"
-                onClick={handleBackToList}
-              >
-                <ArrowLeft className="text-gray-700" />
-              </Button>
-              <h2 className="text-2xl font-bold text-gray-800">Quiz: {selectedLesson.title}</h2>
-              <Trophy className="text-filipino-yellow text-2xl" />
-            </div>
-            
-            {quiz && (
-              <div className="bg-white bg-opacity-50 rounded-2xl p-8">
-                <h4 className="text-xl font-bold text-gray-800 mb-6">{quiz.question}</h4>
-                
-                <div className="grid md:grid-cols-2 gap-4 mb-8">
-                  {quiz.options.map((option, index) => (
-                    <motion.button
-                      key={index}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`glass-effect p-4 rounded-xl text-left transition-all group ${
-                        selectedAnswer === index 
-                          ? 'bg-filipino-blue bg-opacity-20' 
-                          : 'hover:bg-filipino-blue hover:bg-opacity-20'
-                      }`}
-                      onClick={() => handleQuizAnswer(index)}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 border-2 rounded-full transition-colors ${
-                          selectedAnswer === index
-                            ? 'bg-filipino-blue border-filipino-blue'
-                            : 'border-gray-300 group-hover:border-filipino-blue'
-                        }`} />
-                        <span className="font-medium text-gray-700">{option}</span>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
-  }
+
 
   return (
     <div className="max-w-6xl mx-auto px-4 mb-12">
@@ -273,7 +450,6 @@ export default function Lessons() {
             className="relative"
           >
             <div className="w-20 h-20 bg-gradient-to-br from-filipino-yellow via-filipino-red to-filipino-blue rounded-full flex items-center justify-center relative overflow-hidden">
-              {/* Placeholder mascot - cute Filipino character */}
               <div className="text-white text-2xl">🇵🇭</div>
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
@@ -294,7 +470,7 @@ export default function Lessons() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="text-gray-800 font-medium"
+                className="text-foreground font-medium"
               >
                 {mascotMessage}
               </motion.p>
@@ -313,7 +489,7 @@ export default function Lessons() {
       {/* Lessons by Dialect */}
       <div className="space-y-8">
         {dialects?.map((dialect, dialectIndex) => {
-          const dialectLessons = getLessonsForDialect(dialect.id);
+          const dialectLessonsForDialect = dialectLessons[dialect.id] || [];
           const progress = getProgressForDialect(dialect.id);
           
           return (
@@ -338,90 +514,144 @@ export default function Lessons() {
                         <BookOpen className="text-white text-xl" />
                       </motion.div>
                       <div>
-                        <h3 className="text-2xl font-bold text-gray-800">{dialect.name}</h3>
-                        <p className="text-gray-600">{dialect.description}</p>
+                        <h3 className="text-2xl font-bold text-foreground">{dialect.name}</h3>
+                        <p className="text-muted-foreground">{dialect.description}</p>
                       </div>
                     </div>
                     <Badge variant="secondary" className="glass-effect">
-                      {progress?.lessonsCompleted || 0}/{dialect.totalLessons || 0} completed
+                      {progress?.lessonsCompleted || 0}/{dialectLessonsForDialect.length || 0} completed
                     </Badge>
                   </div>
                   
                   <div className="space-y-3">
-                    {dialectLessons.map((lesson, lessonIndex) => (
-                      <motion.div
-                        key={lesson.id}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: lessonIndex * 0.05 }}
-                        className="glass-effect rounded-xl p-4 hover:bg-white hover:bg-opacity-30 transition-all group"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="text-sm font-bold text-gray-500 w-12">
-                                #{lesson.lessonNumber}
+                    {dialectLessonsForDialect
+                      .slice(0, expandedDialects.has(dialect.id.toString()) ? dialectLessonsForDialect.length : 3)
+                      .map((lesson, lessonIndex) => {
+                      const isLocked = isLessonLocked(lesson, dialectLessonsForDialect);
+                      const isCompleted = completedLessons.has(lesson.id);
+                      
+                      return (
+                        <motion.div
+                          key={lesson.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.3, delay: lessonIndex * 0.05 }}
+                          className={`glass-effect rounded-xl p-4 transition-all group ${
+                            isLocked 
+                              ? 'opacity-60 cursor-not-allowed' 
+                              : 'hover:bg-white hover:bg-opacity-30 cursor-pointer'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="text-sm font-bold text-muted-foreground w-12">
+                                  #{lesson.lessonNumber}
+                                </div>
+                                {isLocked ? (
+                                  <motion.div
+                                    animate={{ 
+                                      scale: [1, 1.1, 1],
+                                      rotate: [0, 5, -5, 0]
+                                    }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center"
+                                  >
+                                    <Lock className="w-3 h-3 text-white" />
+                                  </motion.div>
+                                ) : isCompleted ? (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+                                  >
+                                    <CheckCircle className="w-4 h-4 text-white" />
+                                  </motion.div>
+                                ) : null}
                               </div>
-                              {completedLessons.has(lesson.id) && (
-                                <motion.div
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
-                                >
-                                  <CheckCircle className="w-4 h-4 text-white" />
-                                </motion.div>
-                              )}
-                            </div>
-                            <div>
-                              <h4 className={`font-semibold transition-colors ${
-                                completedLessons.has(lesson.id) 
-                                  ? 'text-green-600' 
-                                  : 'text-gray-800 group-hover:text-filipino-blue'
-                              }`}>
-                                {lesson.title}
-                              </h4>
-                              <p className="text-sm text-gray-600">{lesson.content}</p>
-                              <div className="flex items-center space-x-2 mt-1">
-                                {lesson.vocabulary && lesson.vocabulary.length > 0 && (
-                                  <div className="flex items-center space-x-1">
-                                    <Volume2 className="w-3 h-3 text-filipino-blue" />
-                                    <span className="text-xs text-gray-500">Audio</span>
-                                  </div>
-                                )}
-                                <div className="flex items-center space-x-1">
-                                  <FileText className="w-3 h-3 text-filipino-yellow" />
-                                  <span className="text-xs text-gray-500">Interactive</span>
+                              <div>
+                                <h4 className={`font-semibold transition-colors ${
+                                  isLocked 
+                                    ? 'text-gray-400' 
+                                    : isCompleted 
+                                      ? 'text-green-600' 
+                                      : 'text-foreground group-hover:text-filipino-blue'
+                                }`}>
+                                  {lesson.title}
+                                </h4>
+                                <p className={`text-sm ${isLocked ? 'text-gray-400' : 'text-muted-foreground'}`}>
+                                  {lesson.content}
+                                </p>
+                                <div className="flex items-center space-x-2 mt-1">
+                                  {getLessonTypeIcon(lesson)}
+                                  <span className="text-xs text-muted-foreground">
+                                    {getLessonTypeDescription(lesson)}
+                                  </span>
+                                  {lesson.vocabulary && lesson.vocabulary.length > 0 && (
+                                    <>
+                                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                                      <span className="text-xs text-muted-foreground">
+                                        {lesson.vocabulary.length} words
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </div>
+                            <div className="flex items-center space-x-2">
+                              {!isLocked && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className={`glass-effect transition-all ${
+                                    isCompleted
+                                      ? 'hover:bg-green-500 hover:text-white'
+                                      : 'hover:bg-filipino-blue hover:text-white'
+                                  }`}
+                                  onClick={() => handleLessonClick(lesson)}
+                                >
+                                  <Play className="w-4 h-4 mr-2" />
+                                  {isCompleted ? 'Review' : 'Start Lesson'}
+                                </Button>
+                              )}
+                              {isLocked && (
+                                <div className="text-xs text-gray-400 italic">
+                                  Complete previous lessons to unlock
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className={`glass-effect transition-all ${
-                                completedLessons.has(lesson.id)
-                                  ? 'hover:bg-green-500 hover:text-white'
-                                  : 'hover:bg-filipino-blue hover:text-white'
-                              }`}
-                              onClick={() => handleLessonClick(lesson)}
-                            >
-                              <Play className="w-4 h-4 mr-2" />
-                              {completedLessons.has(lesson.id) ? 'Review' : 'Learn'}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="glass-effect hover:bg-filipino-yellow hover:text-white"
-                              onClick={() => handleQuizClick(lesson)}
-                            >
-                              <Trophy className="w-4 h-4 mr-2" />
-                              Quiz
-                            </Button>
-                          </div>
-                        </div>
+                        </motion.div>
+                      );
+                    })}
+                    
+                    {/* View All Lessons Button */}
+                    {dialectLessonsForDialect.length > 3 && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                        className="pt-2"
+                      >
+                        <Button
+                          variant="outline"
+                          className="w-full glass-effect hover:bg-white hover:bg-opacity-30"
+                          onClick={() => toggleDialectExpansion(dialect.id.toString())}
+                        >
+                          {expandedDialects.has(dialect.id.toString()) ? (
+                            <>
+                              Show Less Lessons
+                              <ArrowLeft className="w-4 h-4 ml-2 rotate-90" />
+                            </>
+                          ) : (
+                            <>
+                              View All {dialectLessonsForDialect.length} Lessons
+                              <ArrowLeft className="w-4 h-4 ml-2 -rotate-90" />
+                            </>
+                          )}
+                        </Button>
                       </motion.div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>

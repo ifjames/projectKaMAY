@@ -1,104 +1,178 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Target, Medal, Star, Plus, BookOpen, Trophy, Users } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Flame, Target, Trophy, Users, BookOpen, Star, Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import DialectCard from '@/components/dialect-card';
-import { showSuccessAlert, showQuickActions } from '@/lib/sweetalert';
-import type { User, Dialect, UserProgress, Achievement } from '@shared/schema';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  getDialects, 
+  getUserProfile, 
+  getUserProgress, 
+  getUserAchievements 
+} from '@/lib/firestore-service-simple';
+
+// Firestore types
+interface FirestoreDialect {
+  id: string;
+  name: string;
+  description: string;
+  region: string;
+  color: string;
+  totalLessons: number;
+}
+
+interface FirestoreUser {
+  id: string;
+  name: string;
+  email: string;
+  overallProgress: number;
+  streak: number;
+  weeklyGoalMinutes: number;
+  audioSpeed: string;
+  autoPlayAudio: boolean;
+  pushNotifications: boolean;
+  lastActiveDate?: any;
+}
+
+interface FirestoreUserProgress {
+  id: string;
+  userId: string;
+  dialectId: number;
+  lessonsCompleted: number;
+  progress: number;
+  completedLessonIds: string[];
+  lastStudiedAt?: any;
+}
+
+interface FirestoreAchievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  earnedAt?: any;
+}
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const { currentUser, userData } = useAuth();
+  const [dialects, setDialects] = useState<FirestoreDialect[]>([]);
+  const [user, setUser] = useState<FirestoreUser | null>(null);
+  const [userProgress, setUserProgress] = useState<FirestoreUserProgress[]>([]);
+  const [achievements, setAchievements] = useState<FirestoreAchievement[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: user, isLoading: userLoading } = useQuery<User>({
-    queryKey: ['/api/user'],
-  });
+  useEffect(() => {
+    const loadData = async () => {
+      if (!currentUser) {
+        console.log('No current user, skipping data load');
+        setLoading(false);
+        return;
+      }
 
-  const { data: dialects, isLoading: dialectsLoading } = useQuery<Dialect[]>({
-    queryKey: ['/api/dialects'],
-  });
+      try {
+        console.log('Loading dashboard data for user:', currentUser.uid);
+        
+        const [dialectsData, userData, progressData, achievementsData] = await Promise.all([
+          getDialects(),
+          getUserProfile(),
+          getUserProgress(),
+          getUserAchievements()
+        ]);
+        
+        console.log('Data loaded:', { dialectsData, userData, progressData, achievementsData });
+        
+        setDialects(dialectsData);
+        setUser(userData);
+        setUserProgress(progressData);
+        setAchievements(achievementsData);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const { data: progressData, isLoading: progressLoading } = useQuery<UserProgress[]>({
-    queryKey: ['/api/user/progress'],
-  });
+    if (currentUser) {
+      loadData();
+    } else {
+      setLoading(false);
+    }
+  }, [currentUser]);
 
-  const { data: achievements, isLoading: achievementsLoading } = useQuery<Achievement[]>({
-    queryKey: ['/api/user/achievements'],
-  });
-
-  const handleDialectClick = (dialect: Dialect) => {
+  const handleDialectClick = (dialect: FirestoreDialect) => {
     setLocation(`/lessons?dialect=${dialect.id}`);
   };
 
-  const handleFabClick = () => {
-    showQuickActions();
+  // Calculate user stats
+  const getUserStats = () => {
+    if (!userProgress || !dialects.length) {
+      return {
+        totalLessonsCompleted: 0,
+        totalLessons: dialects.reduce((sum, d) => sum + d.totalLessons, 0),
+        overallProgress: 0,
+        streak: user?.streak || 0,
+        dialectsStarted: 0,
+        recentAchievements: []
+      };
+    }
+
+    const totalLessonsCompleted = userProgress.reduce((sum, progress) => sum + (progress.lessonsCompleted || 0), 0);
+    const totalLessons = dialects.reduce((sum, d) => sum + d.totalLessons, 0);
+    const overallProgress = totalLessons > 0 ? (totalLessonsCompleted / totalLessons) * 100 : 0;
+    
+    // Count how many dialects have been started
+    const dialectsWithProgress = new Set(userProgress.map(p => p.dialectId));
+    const dialectsStarted = dialectsWithProgress.size;
+
+    return {
+      totalLessonsCompleted,
+      totalLessons,
+      overallProgress,
+      streak: user?.streak || 0,
+      dialectsStarted,
+      recentAchievements: achievements.slice(-3) // Show last 3 achievements
+    };
   };
 
-  if (userLoading || dialectsLoading || progressLoading || achievementsLoading) {
+  // Get progress for a specific dialect
+  const getProgressForDialect = (dialectId: string) => {
+    const dialectIdNum = parseInt(dialectId);
+    return userProgress?.find(p => p.dialectId === dialectIdNum) || {
+      dialectId: dialectIdNum,
+      lessonsCompleted: 0,
+      totalLessons: dialects.find(d => d.id === dialectId)?.totalLessons || 0,
+      progress: 0
+    };
+  };
+
+  const stats = getUserStats();
+  const weeklyProgress = Math.min((stats.totalLessonsCompleted * 20), 100); // Simplified weekly goal
+
+  if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="grid lg:grid-cols-3 gap-8"
-        >
-          <div className="lg:col-span-2 space-y-8">
-            {[1, 2, 3].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="glass-effect rounded-3xl p-8"
-              >
-                <div className="animate-pulse">
-                  <motion.div 
-                    className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded mb-4 w-1/3"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  />
-                  <motion.div 
-                    className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded mb-6 w-1/2"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.2 }}
-                  />
-                  <motion.div 
-                    className="h-24 bg-gradient-to-r from-gray-200 to-gray-300 rounded"
-                    animate={{ opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 1.5, repeat: Infinity, delay: 0.4 }}
-                  />
-                </div>
-              </motion.div>
-            ))}
+      <div className="max-w-7xl mx-auto px-4 mb-12">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-effect rounded-3xl p-8 mb-8"
+            >
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 rounded w-1/2 mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-8"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-full"></div>
+              </div>
+            </motion.div>
           </div>
-          <div className="space-y-6">
-            {[1, 2, 3].map((i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.15 }}
-                className="glass-effect rounded-2xl p-6 animate-pulse"
-              >
-                <motion.div 
-                  className="h-20 bg-gradient-to-r from-gray-200 to-gray-300 rounded"
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
-
-  const getProgressForDialect = (dialectId: number) => {
-    return progressData?.find(p => p.dialectId === dialectId);
-  };
-
-  const weeklyProgress = user ? Math.round((4 / 7) * 100) : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-4 mb-12">
@@ -115,53 +189,83 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                  Kumusta, <span className="text-filipino-blue">{user?.name || 'Student'}!</span>
+                <h2 className="text-3xl font-bold text-foreground mb-2">
+                  Kumusta, <span className="text-filipino-blue">{userData?.displayName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User'}!</span>
                 </h2>
-                <p className="text-gray-600">Ready to continue your Filipino dialect journey?</p>
+                <p className="text-muted-foreground">Ready to continue your Filipino dialect journey?</p>
               </div>
-              <div className="hidden md:block">
-                <div className="w-16 h-16 bg-gradient-to-r from-filipino-yellow to-filipino-red rounded-2xl flex items-center justify-center">
-                  <Star className="text-white text-2xl" />
-                </div>
+              <div className="hidden md:flex w-16 h-16 bg-gradient-to-r from-filipino-yellow to-filipino-red rounded-2xl items-center justify-center">
+                <Heart className="text-white text-2xl" />
               </div>
             </div>
             
             {/* Overall Progress */}
-            <div className="bg-white bg-opacity-50 rounded-2xl p-6">
+            <div className="bg-white/10 dark:bg-white/5 rounded-2xl p-6 border border-white/20">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-800">Overall Progress</h3>
+                <h3 className="font-semibold text-foreground">Overall Progress</h3>
                 <span className="text-2xl font-bold text-filipino-blue">
-                  {user?.overallProgress || 0}%
+                  {Math.round(stats.overallProgress)}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="w-full bg-white/20 dark:bg-gray-700 rounded-full h-3 mb-3">
                 <motion.div 
                   className="bg-gradient-to-r from-filipino-blue to-filipino-yellow h-3 rounded-full"
                   initial={{ width: 0 }}
-                  animate={{ width: `${user?.overallProgress || 0}%` }}
+                  animate={{ width: `${stats.overallProgress}%` }}
                   transition={{ duration: 1, delay: 0.5 }}
                 />
+              </div>
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>{stats.totalLessonsCompleted} of {stats.totalLessons} lessons completed</span>
+                <span>{stats.dialectsStarted} dialects started</span>
               </div>
             </div>
           </motion.div>
           
           {/* Dialect Cards */}
           <div className="grid md:grid-cols-2 gap-6">
-            {dialects?.map((dialect, index) => (
-              <motion.div
-                key={dialect.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <DialectCard
-                  dialect={dialect}
-                  progress={getProgressForDialect(dialect.id)}
-                  onClick={() => handleDialectClick(dialect)}
-                />
-              </motion.div>
-            ))}
+            {dialects.length === 0 ? (
+              <div className="col-span-2 text-center py-12">
+                <div className="text-6xl mb-4">🌟</div>
+                <h3 className="text-xl font-bold text-foreground mb-2">Setting up your learning experience...</h3>
+                <p className="text-muted-foreground">We're preparing all the dialects and lessons for you!</p>
+              </div>
+            ) : (
+              dialects.map((dialect, index) => {
+                // Convert FirestoreDialect to the format expected by DialectCard
+                const dialectForCard = {
+                  ...dialect,
+                  id: parseInt(dialect.id),
+                  totalLessons: dialect.totalLessons || 0
+                };
+                
+                const progress = getProgressForDialect(dialect.id);
+                const progressForCard = {
+                  dialectId: progress.dialectId,
+                  id: parseInt(('id' in progress ? progress.id : '0') || '0'),
+                  userId: parseInt(('userId' in progress ? progress.userId : '0') || '0'),
+                  currentLesson: null,
+                  lastStudiedAt: null,
+                  lessonsCompleted: progress.lessonsCompleted || 0,
+                  progress: progress.progress || 0
+                };
+                
+                return (
+                  <motion.div
+                    key={dialect.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <DialectCard
+                      dialect={dialectForCard}
+                      progress={progressForCard}
+                      onClick={() => handleDialectClick(dialect)}
+                    />
+                  </motion.div>
+                );
+              })
+            )}
           </div>
         </div>
         
@@ -176,14 +280,20 @@ export default function Dashboard() {
             <Card className="glass-effect">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-800">Daily Streak</h3>
+                  <h3 className="font-semibold text-foreground">Learning Streak</h3>
                   <Flame className="text-filipino-red text-xl" />
                 </div>
                 <div className="text-center">
                   <div className="text-4xl font-bold text-filipino-red mb-2">
-                    {user?.streak || 0}
+                    {stats.streak}
                   </div>
-                  <p className="text-gray-600 text-sm">days in a row</p>
+                  <p className="text-muted-foreground text-sm">
+                    {stats.streak === 0 ? 'Start learning today!' : 
+                     stats.streak === 1 ? 'lesson completed' : 'lessons completed'}
+                  </p>
+                  {stats.streak > 0 && (
+                    <p className="text-xs text-green-600 mt-1">Keep going! 🔥</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -198,15 +308,15 @@ export default function Dashboard() {
             <Card className="glass-effect">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-gray-800">Weekly Goal</h3>
+                  <h3 className="font-semibold text-foreground">Weekly Progress</h3>
                   <Target className="text-filipino-blue text-xl" />
                 </div>
                 <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-2">
-                    <span>4/7 days</span>
-                    <span>{weeklyProgress}%</span>
+                  <div className="flex justify-between text-sm mb-2 text-muted-foreground">
+                    <span>{stats.totalLessonsCompleted} lessons this week</span>
+                    <span>{Math.round(weeklyProgress)}%</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div className="w-full bg-white/20 dark:bg-gray-700 rounded-full h-2">
                     <motion.div 
                       className="bg-filipino-blue h-2 rounded-full"
                       initial={{ width: 0 }}
@@ -215,6 +325,9 @@ export default function Dashboard() {
                     />
                   </div>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {weeklyProgress >= 100 ? 'Great job this week! 🎉' : 'Keep learning to reach your goal!'}
+                </p>
               </CardContent>
             </Card>
           </motion.div>
@@ -227,27 +340,73 @@ export default function Dashboard() {
           >
             <Card className="glass-effect">
               <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-800 mb-4">Recent Achievements</h3>
+                <h3 className="font-semibold text-foreground mb-4">Recent Achievements</h3>
                 <div className="space-y-3">
-                  {achievements?.slice(-2).map((achievement) => (
-                    <div key={achievement.id} className="flex items-center space-x-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        achievement.icon === 'medal' ? 'bg-filipino-yellow' : 'bg-filipino-blue'
-                      }`}>
-                        {achievement.icon === 'medal' ? (
-                          <Medal className="text-white" />
-                        ) : (
-                          <Star className="text-white" />
-                        )}
+                  {stats.recentAchievements.length > 0 ? (
+                    stats.recentAchievements.map((achievement, index) => (
+                      <div key={index} className="flex items-center space-x-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          achievement.icon === 'medal' ? 'bg-filipino-yellow' : 
+                          achievement.icon === 'trophy' ? 'bg-filipino-red' :
+                          'bg-filipino-blue'
+                        }`}>
+                          {achievement.icon === 'medal' ? (
+                            <Trophy className="text-white w-5 h-5" />
+                          ) : achievement.icon === 'trophy' ? (
+                            <Trophy className="text-white w-5 h-5" />
+                          ) : (
+                            <Star className="text-white w-5 h-5" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-medium text-foreground">{achievement.title}</p>
+                          <p className="text-xs text-muted-foreground">Recently earned</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-800">{achievement.title}</p>
-                        <p className="text-xs text-gray-500">
-                          {achievement.earnedAt ? new Date(achievement.earnedAt).toLocaleDateString() : 'Recent'}
-                        </p>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <Trophy className="text-muted-foreground text-4xl mx-auto mb-2" />
+                      <p className="text-muted-foreground text-sm">No achievements yet</p>
+                      <p className="text-muted-foreground text-xs">Complete lessons to earn your first achievement!</p>
                     </div>
-                  ))}
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Quick Stats */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <Card className="glass-effect">
+              <CardContent className="p-6">
+                <h3 className="font-semibold text-foreground mb-4">Quick Stats</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <BookOpen className="text-filipino-blue w-4 h-4" />
+                      <span className="text-sm text-muted-foreground">Lessons</span>
+                    </div>
+                    <span className="text-sm font-medium">{stats.totalLessonsCompleted}/{stats.totalLessons}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Users className="text-filipino-red w-4 h-4" />
+                      <span className="text-sm text-muted-foreground">Dialects</span>
+                    </div>
+                    <span className="text-sm font-medium">{stats.dialectsStarted}/{dialects.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Trophy className="text-filipino-yellow w-4 h-4" />
+                      <span className="text-sm text-muted-foreground">Achievements</span>
+                    </div>
+                    <span className="text-sm font-medium">{stats.recentAchievements.length}</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -255,13 +414,31 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Floating Action Button for Mobile */}
-      <Button
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-filipino-blue to-filipino-red rounded-full shadow-lg hover:scale-110 transition-transform md:hidden"
-        onClick={handleFabClick}
-      >
-        <Plus className="text-white text-xl" />
-      </Button>
+      {/* Call to Action */}
+      {stats.totalLessonsCompleted === 0 && dialects.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="mt-8 text-center"
+        >
+          <Card className="glass-effect">
+            <CardContent className="p-8">
+              <div className="max-w-md mx-auto">
+                <div className="text-6xl mb-4">🚀</div>
+                <h3 className="text-2xl font-bold text-foreground mb-2">Ready to start learning?</h3>
+                <p className="text-muted-foreground mb-6">Choose a dialect above and begin your journey into Filipino languages!</p>
+                <Button
+                  onClick={() => setLocation('/lessons')}
+                  className="bg-gradient-to-r from-filipino-blue to-filipino-red text-white px-8 py-3 rounded-lg font-bold hover:shadow-lg transition-all duration-300"
+                >
+                  Start Learning Now
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
     </div>
   );
 }

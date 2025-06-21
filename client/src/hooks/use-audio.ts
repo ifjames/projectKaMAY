@@ -21,6 +21,7 @@ export function useAudio(): UseAudioReturn {
       audioRef.current.pause();
     }
 
+    // Fallback to audio file loading for all URLs
     const audio = new Audio(url);
     audioRef.current = audio;
 
@@ -37,9 +38,9 @@ export function useAudio(): UseAudioReturn {
       setCurrentTime(0);
     });
 
-    audio.addEventListener('error', () => {
+    audio.addEventListener('error', (e) => {
       setIsPlaying(false);
-      console.error('Audio playback error');
+      console.error('Audio playback error', e);
     });
 
     try {
@@ -54,17 +55,19 @@ export function useAudio(): UseAudioReturn {
   const pause = useCallback(() => {
     if (audioRef.current && isPlaying) {
       audioRef.current.pause();
-      setIsPlaying(false);
     }
+    
+    setIsPlaying(false);
   }, [isPlaying]);
 
   const stop = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
-      setIsPlaying(false);
-      setCurrentTime(0);
     }
+    
+    setIsPlaying(false);
+    setCurrentTime(0);
   }, []);
 
   const setPlaybackRate = useCallback((rate: number) => {
