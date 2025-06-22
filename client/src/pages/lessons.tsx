@@ -347,7 +347,7 @@ export default function Lessons() {
   const getLessonTypeDescription = (lesson: FirestoreLesson) => {
     switch (lesson.type) {
       case 'audio':
-        return 'Audio Lesson';
+        return 'Interactive Lesson';
       case 'text':
         return 'Reading Lesson';
       default:
@@ -428,15 +428,15 @@ export default function Lessons() {
 
 
   return (
-    <div className="max-w-6xl mx-auto px-4 mb-12">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-12">
       {/* Mascot Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="glass-effect rounded-3xl p-6 mb-8"
+        className="glass-effect rounded-3xl p-4 sm:p-6 mb-6 sm:mb-8"
       >
-        <div className="flex items-center space-x-6">
+        <div className="flex items-center space-x-3 sm:space-x-6">
           <motion.div
             animate={{ 
               y: [0, -5, 0],
@@ -447,10 +447,10 @@ export default function Lessons() {
               repeat: Infinity,
               ease: "easeInOut"
             }}
-            className="relative"
+            className="relative flex-shrink-0"
           >
-            <div className="w-20 h-20 bg-gradient-to-br from-filipino-yellow via-filipino-red to-filipino-blue rounded-full flex items-center justify-center relative overflow-hidden">
-              <div className="text-white text-2xl">🇵🇭</div>
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-filipino-yellow via-filipino-red to-filipino-blue rounded-full flex items-center justify-center relative overflow-hidden">
+              <div className="text-white text-xl sm:text-2xl">🇵🇭</div>
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
@@ -460,34 +460,35 @@ export default function Lessons() {
             <motion.div
               animate={{ scale: [0, 1, 0] }}
               transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
-              className="absolute -top-1 -right-1 w-4 h-4 bg-filipino-red rounded-full"
+              className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-filipino-red rounded-full"
             />
           </motion.div>
-          <div className="flex-1">
-            <div className="glass-effect rounded-2xl p-4 relative">
+          <div className="flex-1 min-w-0">
+            <div className="glass-effect rounded-xl sm:rounded-2xl p-3 sm:p-4 relative">
               <motion.p
                 key={mascotMessage}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="text-foreground font-medium"
+                className="text-foreground font-medium text-sm sm:text-base break-words"
               >
                 {mascotMessage}
               </motion.p>
-              <MessageCircle className="absolute -left-2 top-1/2 transform -translate-y-1/2 text-white drop-shadow-lg" />
+              <MessageCircle className="absolute -left-1 sm:-left-2 top-1/2 transform -translate-y-1/2 text-white drop-shadow-lg w-4 h-4 sm:w-5 sm:h-5" />
             </div>
           </div>
           <motion.div
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
+            className="flex-shrink-0"
           >
-            <Heart className="text-filipino-red text-xl" />
+            <Heart className="text-filipino-red text-lg sm:text-xl" />
           </motion.div>
         </div>
       </motion.div>
 
       {/* Lessons by Dialect */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {dialects?.map((dialect, dialectIndex) => {
           const dialectLessonsForDialect = dialectLessons[dialect.id] || [];
           const progress = getProgressForDialect(dialect.id);
@@ -501,24 +502,24 @@ export default function Lessons() {
               transition={{ duration: 0.5, delay: dialectIndex * 0.1 }}
             >
               <Card className="glass-effect">
-                <CardContent className="p-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center space-x-4">
+                <CardContent className="p-4 sm:p-6 lg:p-8">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+                    <div className="flex items-center space-x-3 sm:space-x-4">
                       <motion.div
                         whileHover={{ scale: 1.1 }}
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center`}
+                        className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0`}
                         style={{ backgroundColor: dialect.color === 'filipino-blue' ? '#2563EB' : 
                                                    dialect.color === 'filipino-red' ? '#DC2626' :
                                                    dialect.color === 'filipino-yellow' ? '#F59E0B' : '#10B981' }}
                       >
-                        <BookOpen className="text-white text-xl" />
+                        <BookOpen className="text-white text-lg sm:text-xl" />
                       </motion.div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-foreground">{dialect.name}</h3>
-                        <p className="text-muted-foreground">{dialect.description}</p>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-xl sm:text-2xl font-bold text-foreground truncate">{dialect.name}</h3>
+                        <p className="text-muted-foreground text-sm sm:text-base line-clamp-2">{dialect.description}</p>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="glass-effect">
+                    <Badge variant="secondary" className="glass-effect text-xs sm:text-sm self-start sm:self-auto flex-shrink-0">
                       {progress?.lessonsCompleted || 0}/{dialectLessonsForDialect.length || 0} completed
                     </Badge>
                   </div>
@@ -536,16 +537,16 @@ export default function Lessons() {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: lessonIndex * 0.05 }}
-                          className={`glass-effect rounded-xl p-4 transition-all group ${
+                          className={`glass-effect rounded-xl p-3 sm:p-4 transition-all group ${
                             isLocked 
                               ? 'opacity-60 cursor-not-allowed' 
                               : 'hover:bg-white hover:bg-opacity-30 cursor-pointer'
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <div className="flex items-center space-x-2">
-                                <div className="text-sm font-bold text-muted-foreground w-12">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
+                            <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 min-w-0 flex-1">
+                              <div className="flex items-center space-x-2 flex-shrink-0">
+                                <div className="text-xs sm:text-sm font-bold text-muted-foreground w-8 sm:w-12">
                                   #{lesson.lessonNumber}
                                 </div>
                                 {isLocked ? (
@@ -555,22 +556,22 @@ export default function Lessons() {
                                       rotate: [0, 5, -5, 0]
                                     }}
                                     transition={{ duration: 2, repeat: Infinity }}
-                                    className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center"
+                                    className="w-5 h-5 sm:w-6 sm:h-6 bg-gray-400 rounded-full flex items-center justify-center"
                                   >
-                                    <Lock className="w-3 h-3 text-white" />
+                                    <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" />
                                   </motion.div>
                                 ) : isCompleted ? (
                                   <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center"
+                                    className="w-5 h-5 sm:w-6 sm:h-6 bg-green-500 rounded-full flex items-center justify-center"
                                   >
-                                    <CheckCircle className="w-4 h-4 text-white" />
+                                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                   </motion.div>
                                 ) : null}
                               </div>
-                              <div>
-                                <h4 className={`font-semibold transition-colors ${
+                              <div className="min-w-0 flex-1">
+                                <h4 className={`font-semibold transition-colors text-sm sm:text-base ${
                                   isLocked 
                                     ? 'text-gray-400' 
                                     : isCompleted 
@@ -579,10 +580,10 @@ export default function Lessons() {
                                 }`}>
                                   {lesson.title}
                                 </h4>
-                                <p className={`text-sm ${isLocked ? 'text-gray-400' : 'text-muted-foreground'}`}>
+                                <p className={`text-xs sm:text-sm line-clamp-2 ${isLocked ? 'text-gray-400' : 'text-muted-foreground'}`}>
                                   {lesson.content}
                                 </p>
-                                <div className="flex items-center space-x-2 mt-1">
+                                <div className="flex items-center space-x-2 mt-1 flex-wrap">
                                   {getLessonTypeIcon(lesson)}
                                   <span className="text-xs text-muted-foreground">
                                     {getLessonTypeDescription(lesson)}
@@ -598,24 +599,24 @@ export default function Lessons() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-0">
                               {!isLocked && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className={`glass-effect transition-all ${
+                                  className={`glass-effect transition-all text-xs sm:text-sm px-3 sm:px-4 ${
                                     isCompleted
                                       ? 'hover:bg-green-500 hover:text-white'
                                       : 'hover:bg-filipino-blue hover:text-white'
                                   }`}
                                   onClick={() => handleLessonClick(lesson)}
                                 >
-                                  <Play className="w-4 h-4 mr-2" />
-                                  {isCompleted ? 'Review' : 'Start Lesson'}
+                                  <Play className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                                  {isCompleted ? 'Review' : 'Start'}
                                 </Button>
                               )}
                               {isLocked && (
-                                <div className="text-xs text-gray-400 italic">
+                                <div className="text-xs text-gray-400 italic text-right sm:text-left">
                                   Complete previous lessons to unlock
                                 </div>
                               )}

@@ -251,25 +251,25 @@ export default function EnhancedLessonInterface({
   const currentQuestion = quizQuestions[currentQuestionIndex];
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-3 sm:space-y-0">
           <Button
             variant="ghost"
             onClick={onBack}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 self-start"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Lessons</span>
+            <span className="text-sm sm:text-base">Back to Lessons</span>
           </Button>
-          <Badge variant="secondary">
+          <Badge variant="secondary" className="self-start sm:self-auto">
             Lesson {lesson.lessonNumber} of {dialectTotalLessons}
           </Badge>
         </div>
         
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{enhancedContent.title}</h1>
-          <p className="text-muted-foreground">{enhancedContent.description}</p>
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">{enhancedContent.title}</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">{enhancedContent.description}</p>
         </div>
       </div>
 
@@ -281,30 +281,30 @@ export default function EnhancedLessonInterface({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white bg-opacity-50 rounded-2xl p-8"
+            className="bg-white bg-opacity-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8"
           >
-            <div className="flex items-center space-x-3 mb-6">
-              <Target className="w-8 h-8 text-filipino-blue" />
-              <h2 className="text-2xl font-bold text-foreground">Lesson Objectives</h2>
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+              <Target className="w-6 h-6 sm:w-8 sm:h-8 text-filipino-blue" />
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Lesson Objectives</h2>
             </div>
             
-            <div className="space-y-4 mb-8">
+            <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
               {enhancedContent.lessonObjectives.map((objective, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="flex items-center space-x-3"
+                  className="flex items-start space-x-2 sm:space-x-3"
                 >
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-foreground">{objective}</span>
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 mt-0.5" />
+                  <span className="text-sm sm:text-base text-foreground">{objective}</span>
                 </motion.div>
               ))}
             </div>
             
             <Button
-              className="bg-filipino-blue text-white hover:bg-blue-700"
+              className="bg-filipino-blue text-white hover:bg-blue-700 w-full sm:w-auto"
               onClick={handleNextStep}
             >
               Start Learning
@@ -320,32 +320,32 @@ export default function EnhancedLessonInterface({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white bg-opacity-50 rounded-2xl p-8"
+            className="bg-white bg-opacity-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8"
           >
-            <div className="flex items-center space-x-3 mb-6">
-              <FileText className="w-8 h-8 text-filipino-blue" />
-              <h2 className="text-2xl font-bold text-foreground">Vocabulary</h2>
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+              <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-filipino-blue" />
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Vocabulary</h2>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
               {enhancedContent.vocabulary.map((item, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                  className="p-3 sm:p-4 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow"
                 >
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="font-semibold text-lg text-foreground">{item.word}</p>
-                      <p className="text-muted-foreground">{item.translation}</p>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-base sm:text-lg text-foreground break-words">{item.word}</p>
+                      <p className="text-sm sm:text-base text-muted-foreground break-words">{item.translation}</p>
                       {('pronunciation' in item) && item.pronunciation && (
-                        <p className="text-sm text-muted-foreground italic">/{item.pronunciation}/</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground italic">/{item.pronunciation}/</p>
                       )}
                     </div>
                     {('category' in item) && item.category && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-xs self-start sm:self-auto">
                         {item.category}
                       </Badge>
                     )}
@@ -355,7 +355,7 @@ export default function EnhancedLessonInterface({
             </div>
             
             <Button
-              className="bg-filipino-blue text-white hover:bg-blue-700"
+              className="bg-filipino-blue text-white hover:bg-blue-700 w-full sm:w-auto"
               onClick={handleNextStep}
             >
               Continue to Content
@@ -371,26 +371,26 @@ export default function EnhancedLessonInterface({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white bg-opacity-50 rounded-2xl p-8"
+            className="bg-white bg-opacity-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8"
           >
-            <div className="flex items-center space-x-3 mb-6">
-              <FileText className="w-8 h-8 text-filipino-blue" />
-              <h2 className="text-2xl font-bold text-foreground">Learn</h2>
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
+              <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-filipino-blue" />
+              <h2 className="text-xl sm:text-2xl font-bold text-foreground">Learn</h2>
             </div>
             
-            <div className="prose prose-lg max-w-none mb-8">
-              <p className="text-foreground leading-relaxed">{enhancedContent.content}</p>
+            <div className="prose prose-sm sm:prose-lg max-w-none mb-6 sm:mb-8">
+              <p className="text-sm sm:text-base text-foreground leading-relaxed">{enhancedContent.content}</p>
               
               {enhancedContent.culturalNote && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-filipino-blue">
-                  <h4 className="font-semibold text-filipino-blue mb-2">Cultural Note</h4>
-                  <p className="text-foreground">{enhancedContent.culturalNote}</p>
+                <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg border-l-4 border-filipino-blue">
+                  <h4 className="font-semibold text-sm sm:text-base text-filipino-blue mb-2">Cultural Note</h4>
+                  <p className="text-xs sm:text-sm text-foreground">{enhancedContent.culturalNote}</p>
                 </div>
               )}
             </div>
             
             <Button
-              className="bg-filipino-blue text-white hover:bg-blue-700"
+              className="bg-filipino-blue text-white hover:bg-blue-700 w-full sm:w-auto"
               onClick={handleNextStep}
             >
               Take Quiz
@@ -406,15 +406,15 @@ export default function EnhancedLessonInterface({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white bg-opacity-50 rounded-2xl p-8"
+            className="bg-white bg-opacity-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8"
           >
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <HelpCircle className="w-8 h-8 text-filipino-blue" />
-                <h2 className="text-2xl font-bold text-foreground">Quiz</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <HelpCircle className="w-6 h-6 sm:w-8 sm:h-8 text-filipino-blue" />
+                <h2 className="text-xl sm:text-2xl font-bold text-foreground">Quiz</h2>
               </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-muted-foreground">
+              <div className="flex items-center space-x-3 sm:space-x-4">
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   Question {currentQuestionIndex + 1} of {quizQuestions.length}
                 </span>
                 <div className="flex space-x-1">
@@ -430,44 +430,45 @@ export default function EnhancedLessonInterface({
               </div>
             </div>
             
-            <div className="mb-6">
+            <div className="mb-6 sm:mb-8">
               <div className="flex items-center justify-between mb-4">
                 <Badge 
                   variant={
                     currentQuestion.difficulty === 'easy' ? 'default' :
                     currentQuestion.difficulty === 'medium' ? 'secondary' : 'destructive'
                   }
+                  className="text-xs"
                 >
                   {currentQuestion.difficulty}
                 </Badge>
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-xs">
                   {currentQuestion.points} points
                 </Badge>
               </div>
               
-              <h3 className="text-xl font-semibold text-foreground mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold text-foreground mb-4 sm:mb-6">
                 {currentQuestion.question}
               </h3>
               
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {currentQuestion.options.map((option: string, index: number) => (
                   <Button
                     key={index}
                     variant={selectedAnswer === index ? "default" : "outline"}
-                    className={`w-full text-left justify-start p-4 h-auto ${
+                    className={`w-full text-left justify-start p-3 sm:p-4 h-auto text-sm sm:text-base ${
                       selectedAnswer === index ? 'bg-filipino-blue text-white' : ''
                     }`}
                     onClick={() => handleAnswer(index)}
                   >
-                    <span className="font-medium mr-3">{String.fromCharCode(65 + index)}.</span>
-                    {option}
+                    <span className="font-medium mr-2 sm:mr-3">{String.fromCharCode(65 + index)}.</span>
+                    <span className="break-words">{option}</span>
                   </Button>
                 ))}
               </div>
             </div>
             
             <Button
-              className="bg-filipino-blue text-white hover:bg-blue-700"
+              className="bg-filipino-blue text-white hover:bg-blue-700 w-full sm:w-auto"
               onClick={handleNextQuestion}
               disabled={selectedAnswer === null}
             >
@@ -484,39 +485,39 @@ export default function EnhancedLessonInterface({
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="bg-white bg-opacity-50 rounded-2xl p-8"
+            className="bg-white bg-opacity-50 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8"
           >
-            <div className="text-center mb-8">
-              <Trophy className="w-16 h-16 text-filipino-yellow mx-auto mb-4" />
-              <h2 className="text-3xl font-bold text-foreground mb-2">Lesson Complete!</h2>
-              <p className="text-muted-foreground">Great job completing this lesson</p>
+            <div className="text-center mb-6 sm:mb-8">
+              <Trophy className="w-12 h-12 sm:w-16 sm:h-16 text-filipino-yellow mx-auto mb-3 sm:mb-4" />
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Lesson Complete!</h2>
+              <p className="text-sm sm:text-base text-muted-foreground">Great job completing this lesson</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <Card className="p-6 text-center">
-                <Star className="w-8 h-8 text-filipino-yellow mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">{totalScore}</p>
-                <p className="text-muted-foreground">Points Earned</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+              <Card className="p-3 sm:p-4 lg:p-6 text-center">
+                <Star className="w-6 h-6 sm:w-8 sm:h-8 text-filipino-yellow mx-auto mb-2" />
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{totalScore}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Points Earned</p>
               </Card>
               
-              <Card className="p-6 text-center">
-                <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">
+              <Card className="p-3 sm:p-4 lg:p-6 text-center">
+                <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-500 mx-auto mb-2" />
+                <p className="text-xl sm:text-2xl font-bold text-foreground">
                   {Math.round((totalScore / totalPossiblePoints) * 100)}%
                 </p>
-                <p className="text-muted-foreground">Accuracy</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Accuracy</p>
               </Card>
               
-              <Card className="p-6 text-center">
-                <Award className="w-8 h-8 text-filipino-blue mx-auto mb-2" />
-                <p className="text-2xl font-bold text-foreground">{actualNewAchievements.length}</p>
-                <p className="text-muted-foreground">Achievements</p>
+              <Card className="p-3 sm:p-4 lg:p-6 text-center">
+                <Award className="w-6 h-6 sm:w-8 sm:h-8 text-filipino-blue mx-auto mb-2" />
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{actualNewAchievements.length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Achievements</p>
               </Card>
             </div>
             
             {actualNewAchievements.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-xl font-bold text-foreground mb-4">🎉 New Achievements!</h3>
+              <div className="mb-6 sm:mb-8">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground mb-3 sm:mb-4">🎉 New Achievements!</h3>
                 <div className="space-y-3">
                   {actualNewAchievements.map((achievementKey: any) => {
                     const achievement = getAchievementById(achievementKey);
@@ -549,22 +550,22 @@ export default function EnhancedLessonInterface({
             )}
             
             {/* Quiz Review Section */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-bold text-foreground">Quiz Review</h3>
+            <div className="mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
+                <h3 className="text-lg sm:text-xl font-bold text-foreground">Quiz Review</h3>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowReview(!showReview)}
-                  className="text-filipino-blue border-filipino-blue hover:bg-filipino-blue hover:text-white"
+                  className="text-filipino-blue border-filipino-blue hover:bg-filipino-blue hover:text-white self-start"
                 >
-                  <HelpCircle className="w-4 h-4 mr-2" />
-                  {showReview ? 'Hide Review' : 'Show Answers'}
+                  <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  <span className="text-xs sm:text-sm">{showReview ? 'Hide Review' : 'Show Answers'}</span>
                 </Button>
               </div>
               
               {showReview && (
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {quizResults.map((result, index) => {
                     const question = quizQuestions.find(q => q.id === result.questionId);
                     if (!question) return null;
@@ -575,25 +576,25 @@ export default function EnhancedLessonInterface({
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className={`p-4 rounded-lg border-2 ${
+                        className={`p-3 sm:p-4 rounded-lg border-2 ${
                           result.isCorrect 
                             ? 'border-green-200 bg-green-50' 
                             : 'border-red-200 bg-red-50'
                         }`}
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <h4 className="font-semibold text-foreground flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-2 sm:mb-3 space-y-2 sm:space-y-0">
+                          <h4 className="font-semibold text-sm sm:text-base text-foreground flex-1 break-words">
                             {index + 1}. {question.question}
                           </h4>
-                          <div className={`flex items-center space-x-2 ${
+                          <div className={`flex items-center space-x-2 self-start sm:self-auto ${
                             result.isCorrect ? 'text-green-600' : 'text-red-600'
                           }`}>
                             {result.isCorrect ? (
-                              <Check className="w-5 h-5" />
+                              <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                             ) : (
-                              <X className="w-5 h-5" />
+                              <X className="w-4 h-4 sm:w-5 sm:h-5" />
                             )}
-                            <span className="font-bold">
+                            <span className="font-bold text-xs sm:text-sm">
                               {result.isCorrect ? '+' : '0'}{result.points} pts
                             </span>
                           </div>
@@ -640,7 +641,7 @@ export default function EnhancedLessonInterface({
               )}
             </div>
             
-            <div className="flex justify-center space-x-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               {quizAttempts < 3 && (
                 <Button
                   variant="outline"
@@ -652,30 +653,30 @@ export default function EnhancedLessonInterface({
                     setSelectedAnswer(null);
                     setShowReview(false);
                   }}
-                  className="text-filipino-blue border-filipino-blue hover:bg-filipino-blue hover:text-white"
+                  className="text-filipino-blue border-filipino-blue hover:bg-filipino-blue hover:text-white w-full sm:w-auto"
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Retake Quiz ({3 - quizAttempts} attempts left)
+                  <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  <span className="text-sm sm:text-base">Retake Quiz ({3 - quizAttempts} attempts left)</span>
                 </Button>
               )}
               
-              {quizAttempts >= 3 && (
-                <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
-                  <p className="text-yellow-800 text-sm">
-                    You've reached the maximum number of quiz attempts (3). 
-                    You can continue with your current score or review the lesson content again.
-                  </p>
-                </div>
-              )}
-              
               <Button
-                className="bg-filipino-blue text-white hover:bg-blue-700"
+                className="bg-filipino-blue text-white hover:bg-blue-700 w-full sm:w-auto"
                 onClick={handleComplete}
               >
-                Continue Learning
-                <ArrowRight className="ml-2 w-4 h-4" />
+                <span className="text-sm sm:text-base">Continue Learning</span>
+                <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
               </Button>
             </div>
+            
+            {quizAttempts >= 3 && (
+              <div className="text-center p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg mt-4">
+                <p className="text-yellow-800 text-xs sm:text-sm">
+                  You've reached the maximum number of quiz attempts (3). 
+                  You can continue with your current score or review the lesson content again.
+                </p>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -183,6 +183,93 @@
     background: #1a1a1a !important;
     color: white !important;
   }
+  
+  /* Text line clamping utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+  
+  /* Mobile responsive utilities */
+  .mobile-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .mobile-text {
+    @apply text-sm sm:text-base;
+  }
+  
+  .mobile-heading {
+    @apply text-lg sm:text-xl lg:text-2xl;
+  }
+  
+  .mobile-spacing {
+    @apply space-y-3 sm:space-y-4 lg:space-y-6;
+  }
+  
+  .mobile-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3;
+  }
+  
+  .mobile-glass-card {
+    @apply rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8;
+  }
+  
+  .mobile-button {
+    @apply w-full sm:w-auto text-sm sm:text-base px-4 sm:px-6 py-2 sm:py-3;
+  }
+  
+  .mobile-icon {
+    @apply w-4 h-4 sm:w-5 sm:h-5;
+  }
+  
+  .mobile-icon-lg {
+    @apply w-6 h-6 sm:w-8 sm:h-8;
+  }
+  
+  /* Prevent horizontal overflow on mobile */
+  .mobile-container {
+    @apply max-w-full overflow-x-hidden;
+  }
+  
+  /* Better touch targets for mobile */
+  .mobile-touch {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Mobile-friendly text wrapping */
+  .mobile-text-wrap {
+    @apply break-words hyphens-auto;
+  }
+  
+  /* Mobile-specific flex utilities */
+  .mobile-flex-col {
+    @apply flex flex-col sm:flex-row;
+  }
+  
+  .mobile-items-start {
+    @apply items-start sm:items-center;
+  }
+  
+  .mobile-space-y {
+    @apply space-y-3 sm:space-y-0 sm:space-x-4;
+  }
 }
 
 /* Filipino themed colors */

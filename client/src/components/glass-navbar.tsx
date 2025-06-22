@@ -43,11 +43,11 @@ export default function GlassNavbar() {
     <>
       <nav className="glass-navbar fixed top-0 w-full z-50 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-filipino-blue to-filipino-red rounded-xl flex items-center justify-center">
-              <Languages className="text-white text-xl" />
+          <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-filipino-blue to-filipino-red rounded-xl flex items-center justify-center">
+              <Languages className="text-white text-lg sm:text-xl" />
             </div>
-            <h1 className="text-xl font-bold text-foreground">KaMAY</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-foreground">KaMAY</h1>
           </Link>
           
           {/* Desktop Navigation */}
@@ -117,11 +117,35 @@ export default function GlassNavbar() {
               className="md:hidden mt-4 glass-effect rounded-2xl p-4 mx-4 overflow-hidden"
             >
               <div className="flex flex-col space-y-3">
+                {/* User Info */}
+                <div className="flex items-center space-x-3 p-3 bg-white bg-opacity-10 rounded-xl mb-3">
+                  {currentUser?.photoURL ? (
+                    <img 
+                      src={currentUser.photoURL} 
+                      alt="Profile"
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-filipino-blue rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-foreground font-medium text-sm">
+                      {userData?.displayName || currentUser?.displayName || 'User'}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      {currentUser?.email}
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Navigation Items */}
                 {navItems.map((item) => (
                   <Link key={item.href} href={item.href}>
                     <span 
-                      className={`text-foreground hover:text-filipino-blue transition-colors font-medium py-2 block cursor-pointer ${
-                        isActive(item.href) ? 'text-filipino-blue' : ''
+                      className={`text-foreground hover:text-filipino-blue transition-colors font-medium py-3 px-2 block cursor-pointer rounded-lg hover:bg-white hover:bg-opacity-10 ${
+                        isActive(item.href) ? 'text-filipino-blue bg-white bg-opacity-10' : ''
                       }`}
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -129,6 +153,19 @@ export default function GlassNavbar() {
                     </span>
                   </Link>
                 ))}
+                
+                {/* Logout Button */}
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    handleLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-foreground hover:text-filipino-red hover:bg-white hover:bg-opacity-20 justify-start px-2 mt-2"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
               </div>
             </motion.div>
           )}
